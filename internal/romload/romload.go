@@ -8,7 +8,7 @@ import (
 	"github.com/kourtnet/GoBoy/internal/bus"
 )
 
-func Load(filename string, bus bus.Bus) error {
+func Load(filename string, bus *bus.Bus) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		return err
