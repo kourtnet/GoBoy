@@ -29,7 +29,7 @@ type CPU struct {
 	instructionLen int
 	opNum          int
 
-	registers registers
+	registers *registers
 	bus       *bus.Bus
 }
 
