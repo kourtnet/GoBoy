@@ -24,12 +24,32 @@ type registers struct {
 	temp byte
 }
 
+func (r *registers) String() string {
+	var res string
+
+	res += fmt.Sprintf("IR: %#x ", r.IR)
+	res += fmt.Sprintf("IE: %#x ", r.IE)
+	res += fmt.Sprintf("A: %#x ", r.A)
+	res += fmt.Sprintf("F: %#x ", r.F)
+	res += fmt.Sprintf("B: %#x ", r.B)
+	res += fmt.Sprintf("C: %#x ", r.C)
+	res += fmt.Sprintf("D: %#x ", r.D)
+	res += fmt.Sprintf("E: %#x ", r.E)
+	res += fmt.Sprintf("H %#x ", r.H)
+	res += fmt.Sprintf("L: %#x ", r.L)
+	res += fmt.Sprintf("PC: %#x ", r.PC)
+	res += fmt.Sprintf("SP: %#x", r.SP)
+
+	return res
+}
+
 const instructionsNum = 256
 
 type CPU struct {
 	instructions   [instructionsNum][]func()
 	instructionLen int
 	opNum          int
+	step           int
 
 	registers *registers
 	bus       *bus.Bus
@@ -43,6 +63,8 @@ func (cpu *CPU) fetchData() {
 	if err != nil {
 		panic(err)
 	}
+
+	cpu.incPC()
 }
 
 func (cpu *CPU) fetchOpcode() error {
@@ -70,6 +92,8 @@ func (cpu *CPU) execute() {
 }
 
 func (cpu *CPU) Step() (bool, error) {
+	cpu.step++
+	fmt.Printf("Step %d:\n", cpu.step)
 	cpu.execute()
 
 	if cpu.opNum == cpu.instructionLen {
@@ -78,6 +102,8 @@ func (cpu *CPU) Step() (bool, error) {
 			return false, err
 		}
 	}
+
+	fmt.Printf("Regs:\n%s\n", cpu.registers)
 
 	return false, nil
 }
