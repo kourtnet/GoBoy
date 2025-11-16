@@ -16,6 +16,7 @@ func New(bus *bus.Bus) CPU {
 
 	// instruction set
 	cpu.initLDR8R8()
+	cpu.initLDR8N8()
 
 	// Required for initial cpu step, basically a NOP
 	cpu.instructionLen = len(cpu.instructions[cpu.registers.IR])
@@ -73,4 +74,14 @@ func (cpu *CPU) initLDR8R8() {
 	cpu.instructions[0x7C] = []func(){cpu.ldR8R8('A', 'H')}
 	cpu.instructions[0x7D] = []func(){cpu.ldR8R8('A', 'L')}
 	cpu.instructions[0x7F] = []func(){cpu.ldR8R8('A', 'A')}
+}
+
+func (cpu *CPU) initLDR8N8() {
+	cpu.instructions[0x06] = []func(){cpu.fetchData, cpu.ldR8N8('B')}
+	cpu.instructions[0x16] = []func(){cpu.fetchData, cpu.ldR8N8('D')}
+	cpu.instructions[0x26] = []func(){cpu.fetchData, cpu.ldR8N8('H')}
+	cpu.instructions[0x0E] = []func(){cpu.fetchData, cpu.ldR8N8('C')}
+	cpu.instructions[0x1E] = []func(){cpu.fetchData, cpu.ldR8N8('E')}
+	cpu.instructions[0x2E] = []func(){cpu.fetchData, cpu.ldR8N8('L')}
+	cpu.instructions[0x3E] = []func(){cpu.fetchData, cpu.ldR8N8('A')}
 }

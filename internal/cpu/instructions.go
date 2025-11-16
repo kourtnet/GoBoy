@@ -13,7 +13,6 @@ func (cpu *CPU) incPC() {
 	cpu.registers.PC++
 }
 
-// LD
 func (cpu *CPU) ldR8R8(r1Name, r2Name byte) func() {
 	if r1Name == r2Name {
 		return func() {}
@@ -61,5 +60,33 @@ func (cpu *CPU) ldR8R8(r1Name, r2Name byte) func() {
 
 	return func() {
 		*r1 = *r2
+	}
+}
+
+// Requires fetchData as first procedure in instruction
+func (cpu *CPU) ldR8N8(rName byte) func() {
+	var r *byte
+
+	switch rName {
+	case 'A':
+		r = &cpu.registers.A
+	case 'B':
+		r = &cpu.registers.B
+	case 'C':
+		r = &cpu.registers.C
+	case 'D':
+		r = &cpu.registers.D
+	case 'E':
+		r = &cpu.registers.E
+	case 'H':
+		r = &cpu.registers.H
+	case 'L':
+		r = &cpu.registers.L
+	default:
+		panic("unknown register name for r2")
+	}
+
+	return func() {
+		*r = cpu.registers.temp
 	}
 }

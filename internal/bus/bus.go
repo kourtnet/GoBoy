@@ -2,6 +2,8 @@
 // operations and different memory blocks mapping (ROM, WRAM, VRAM, e.t.c.)
 package bus
 
+import "fmt"
+
 const (
 	ramSize = 64 * 1024
 )
@@ -11,12 +13,20 @@ type Bus struct {
 	RAM [ramSize]byte
 }
 
-func (b *Bus) Read(addr uint16) byte {
-	// TODO: index out of range handling
-	return b.RAM[addr]
+func (b *Bus) Read(addr uint16) (byte, error) {
+	if int(addr) >= len(b.RAM) {
+		return 0, fmt.Errorf("address: %#x if out of memory range", addr)
+	}
+
+	return b.RAM[addr], nil
 }
 
-func (b *Bus) Write(addr uint16, val byte) {
-	// TODO: index out of range handling
+func (b *Bus) Write(addr uint16, val byte) error {
+	if int(addr) >= len(b.RAM) {
+		return fmt.Errorf("address: %#x if out of memory range", addr)
+	}
+
 	b.RAM[addr] = val
+
+	return nil
 }
