@@ -68,6 +68,8 @@ func (cpu *CPU) Step() (bool, error) {
 	}
 
 	fmt.Printf("Regs:\n%s\n", cpu.registers)
+	fmt.Println("16-bit regs:")
+	fmt.Printf("AF: %#x BC: %#x DE: %#x HL: %#x\n", cpu.registers.AF(), cpu.registers.BC(), cpu.registers.DE(), cpu.registers.HL())
 
 	return false, nil
 }
