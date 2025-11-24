@@ -93,3 +93,12 @@ func (cpu *CPU) ldR8Temp(rName byte) func() {
 		*r = cpu.registers.temp
 	}
 }
+
+func (cpu *CPU) ldR16AddrR8(r16Name string, r8Name byte) func() {
+	r16 := cpu.determine16Reg(r16Name)
+	r8 := cpu.determine8Reg(r8Name)
+
+	return func() {
+		cpu.bus.Write(r16(), *r8)
+	}
+}
