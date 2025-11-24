@@ -22,7 +22,7 @@ func New(bus *bus.Bus) CPU {
 	cpu.initLDR8R8()
 	cpu.initLDR8N8()
 	cpu.initLDR8R16Addr()
-	cpu.initR16AddrR8()
+	cpu.initLDR16AddrR8()
 
 	// Required for initial cpu step, basically a NOP
 	cpu.instructionLen = len(cpu.instructions[cpu.registers.IR])
@@ -111,7 +111,7 @@ func (cpu *CPU) initLDR8R16Addr() {
 
 // Here memory write happens on the first M-cycle. I find it strange, but doc
 // states that it's true. Gonna examine it once I will run test-ROMs
-func (cpu *CPU) initR16AddrR8() {
+func (cpu *CPU) initLDR16AddrR8() {
 	cpu.instructions[0x02] = []func(){cpu.ldR16AddrR8("BC", 'A'), cpu.nop}
 	cpu.instructions[0x12] = []func(){cpu.ldR16AddrR8("DE", 'A'), cpu.nop}
 
@@ -122,4 +122,10 @@ func (cpu *CPU) initR16AddrR8() {
 	cpu.instructions[0x74] = []func(){cpu.ldR16AddrR8("HL", 'H'), cpu.nop}
 	cpu.instructions[0x75] = []func(){cpu.ldR16AddrR8("HL", 'L'), cpu.nop}
 	cpu.instructions[0x77] = []func(){cpu.ldR16AddrR8("HL", 'A'), cpu.nop}
+}
+
+// Here memory write happens on the first M-cycle. I find it strange, but doc
+// states that it's true. Gonna examine it once I will run test-ROMs
+func (cpu *CPU) initLDHLAddrN() {
+	cpu.instructions[0x36] = []func(){cpu.readPCMemAndInc, cpu.ldHLAddrTemp, cpu.nop}
 }

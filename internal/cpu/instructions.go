@@ -102,3 +102,8 @@ func (cpu *CPU) ldR16AddrR8(r16Name string, r8Name byte) func() {
 		cpu.bus.Write(r16(), *r8)
 	}
 }
+
+// there's no LD [R16], N8 instructions rather then with HL
+func (cpu *CPU) ldHLAddrTemp() {
+	cpu.bus.Write(cpu.registers.HL(), cpu.registers.temp)
+}
