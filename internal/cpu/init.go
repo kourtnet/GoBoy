@@ -5,7 +5,7 @@ import "github.com/kourtnet/GoBoy/internal/bus"
 func New(bus *bus.Bus) CPU {
 	cpu := CPU{
 		registers: &registers{
-			PC: 0x100,
+			pc: 0x100,
 		},
 
 		bus: bus,
@@ -15,13 +15,22 @@ func New(bus *bus.Bus) CPU {
 	cpu.instructions[0x3C] = []func(){cpu.incA}
 
 	// instruction set
+	// nop
+	cpu.initNOP()
+
+	// ld
 	cpu.initLDR8R8()
 	cpu.initLDR8N8()
+	cpu.initLDR8R16Addr()
 
 	// Required for initial cpu step, basically a NOP
 	cpu.instructionLen = len(cpu.instructions[cpu.registers.IR])
 
 	return cpu
+}
+
+func (cpu *CPU) initNOP() {
+	cpu.instructions[0x00] = []func(){cpu.nop}
 }
 
 func (cpu *CPU) initLDR8R8() {
@@ -77,11 +86,24 @@ func (cpu *CPU) initLDR8R8() {
 }
 
 func (cpu *CPU) initLDR8N8() {
-	cpu.instructions[0x06] = []func(){cpu.fetchData, cpu.ldR8N8('B')}
-	cpu.instructions[0x16] = []func(){cpu.fetchData, cpu.ldR8N8('D')}
-	cpu.instructions[0x26] = []func(){cpu.fetchData, cpu.ldR8N8('H')}
-	cpu.instructions[0x0E] = []func(){cpu.fetchData, cpu.ldR8N8('C')}
-	cpu.instructions[0x1E] = []func(){cpu.fetchData, cpu.ldR8N8('E')}
-	cpu.instructions[0x2E] = []func(){cpu.fetchData, cpu.ldR8N8('L')}
-	cpu.instructions[0x3E] = []func(){cpu.fetchData, cpu.ldR8N8('A')}
+	cpu.instructions[0x06] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('B')}
+	cpu.instructions[0x16] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('D')}
+	cpu.instructions[0x26] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('H')}
+	cpu.instructions[0x0E] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('C')}
+	cpu.instructions[0x1E] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('E')}
+	cpu.instructions[0x2E] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('L')}
+	cpu.instructions[0x3E] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('A')}
+}
+
+func (cpu *CPU) initLDR8R16Addr() {
+	cpu.instructions[0x46] = []func(){cpu.readR16Addr("HL"), cpu.ldR8Temp('B')}
+	cpu.instructions[0x56] = []func(){cpu.readR16Addr("HL"), cpu.ldR8Temp('D')}
+	cpu.instructions[0x66] = []func(){cpu.readR16Addr("HL"), cpu.ldR8Temp('H')}
+	cpu.instructions[0x4E] = []func(){cpu.readR16Addr("HL"), cpu.ldR8Temp('C')}
+	cpu.instructions[0x5E] = []func(){cpu.readR16Addr("HL"), cpu.ldR8Temp('E')}
+	cpu.instructions[0x6E] = []func(){cpu.readR16Addr("HL"), cpu.ldR8Temp('L')}
+	cpu.instructions[0x7E] = []func(){cpu.readR16Addr("HL"), cpu.ldR8Temp('A')}
+
+	cpu.instructions[0x0A] = []func(){cpu.readR16Addr("BC"), cpu.ldR8Temp('A')}
+	cpu.instructions[0x1A] = []func(){cpu.readR16Addr("DE"), cpu.ldR8Temp('A')}
 }

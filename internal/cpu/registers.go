@@ -13,8 +13,8 @@ type registers struct {
 	E  byte
 	H  byte
 	L  byte
-	PC uint16
-	SP uint16
+	pc uint16
+	sp uint16
 
 	temp byte
 }
@@ -32,8 +32,8 @@ func (r *registers) String() string {
 	res += fmt.Sprintf("E: %#x ", r.E)
 	res += fmt.Sprintf("H %#x ", r.H)
 	res += fmt.Sprintf("L: %#x ", r.L)
-	res += fmt.Sprintf("PC: %#x ", r.PC)
-	res += fmt.Sprintf("SP: %#x", r.SP)
+	res += fmt.Sprintf("PC: %#x ", r.pc)
+	res += fmt.Sprintf("SP: %#x", r.sp)
 
 	return res
 }
@@ -52,4 +52,16 @@ func (r *registers) DE() uint16 {
 
 func (r *registers) HL() uint16 {
 	return uint16(r.H)<<8 + uint16(r.L)
+}
+
+func (r *registers) PC() uint16 {
+	return r.pc
+}
+
+func (r *registers) SP() uint16 {
+	return r.sp
+}
+
+func (r *registers) incPC() {
+	r.pc++
 }

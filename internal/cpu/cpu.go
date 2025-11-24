@@ -19,21 +19,9 @@ type CPU struct {
 	bus       *bus.Bus
 }
 
-// have to panic here, cause func is used in cpu.instructions array
-// TODO: figure out proper error handling
-func (cpu *CPU) fetchData() {
-	var err error
-	cpu.registers.temp, err = cpu.bus.Read(cpu.registers.PC)
-	if err != nil {
-		panic(err)
-	}
-
-	cpu.incPC()
-}
-
 func (cpu *CPU) fetchOpcode() error {
 	var err error
-	cpu.registers.IR, err = cpu.bus.Read(cpu.registers.PC)
+	cpu.registers.IR, err = cpu.bus.Read(cpu.registers.PC())
 	if err != nil {
 		return err
 	}
@@ -42,10 +30,10 @@ func (cpu *CPU) fetchOpcode() error {
 
 	cpu.instructionLen = len(cpu.instructions[cpu.registers.IR])
 	if cpu.instructionLen == 0 {
-		return fmt.Errorf("unknown opcode at: 0x%x", cpu.registers.PC)
+		return fmt.Errorf("unknown opcode at: 0x%x", cpu.registers.PC())
 	}
 
-	cpu.incPC()
+	cpu.registers.incPC()
 
 	return nil
 }
