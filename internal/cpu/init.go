@@ -23,6 +23,8 @@ func New(bus *bus.Bus) CPU {
 	cpu.initLDR8N8()
 	cpu.initLDR8R16Addr()
 	cpu.initLDR16AddrR8()
+	cpu.initLDHLAddrN()
+	cpu.initLDR8N16Addr()
 
 	// Required for initial cpu step, basically a NOP
 	cpu.instructionLen = len(cpu.instructions[cpu.registers.IR])
@@ -128,4 +130,8 @@ func (cpu *CPU) initLDR16AddrR8() {
 // states that it's true. Gonna examine it once I will run test-ROMs
 func (cpu *CPU) initLDHLAddrN() {
 	cpu.instructions[0x36] = []func(){cpu.readPCMemAndInc, cpu.ldHLAddrTemp, cpu.nop}
+}
+
+func (cpu *CPU) initLDR8N16Addr() {
+	cpu.instructions[0xFA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ldR8Temp('A')}
 }

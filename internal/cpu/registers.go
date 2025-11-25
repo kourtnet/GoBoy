@@ -16,7 +16,9 @@ type registers struct {
 	pc uint16
 	sp uint16
 
-	temp byte
+	// temporary regs
+	temp     byte
+	tempAddr uint16
 }
 
 func (r *registers) String() string {
@@ -62,6 +64,21 @@ func (r *registers) SP() uint16 {
 	return r.sp
 }
 
+func (r *registers) TempAddr() uint16 {
+	return r.tempAddr
+}
+
 func (r *registers) incPC() {
 	r.pc++
+}
+
+func (r *registers) SetTempAddrMsb(v byte) {
+	r.tempAddr += uint16(v) << 8
+}
+
+// Lsb set also clears tempAddr because there's no use in
+// keeping a Msb part and writing new Lsb
+func (r *registers) SetTempAddrLsb(v byte) {
+	r.tempAddr = 0
+	r.tempAddr = uint16(v)
 }

@@ -24,6 +24,16 @@ func (cpu *CPU) readR16Addr(rName string) func() {
 	}
 }
 
+func (cpu *CPU) readAddrLsb() {
+	cpu.readPCMemAndInc()
+	cpu.registers.SetTempAddrLsb(cpu.registers.temp)
+}
+
+func (cpu *CPU) readAddrMsb() {
+	cpu.readPCMemAndInc()
+	cpu.registers.SetTempAddrMsb(cpu.registers.temp)
+}
+
 func (cpu *CPU) determine8Reg(rName byte) *byte {
 	switch rName {
 	case 'A':
@@ -59,6 +69,9 @@ func (cpu *CPU) determine16Reg(rName string) func() uint16 {
 		return cpu.registers.PC
 	case "SP":
 		return cpu.registers.SP
+	// Special processing for easier memory reading with immediate addr
+	case "TempAddr":
+		return cpu.registers.TempAddr
 	default:
 		panic("unknown register name " + rName)
 	}
