@@ -25,6 +25,7 @@ func New(bus *bus.Bus) CPU {
 	cpu.initLDR16AddrR8()
 	cpu.initLDHLAddrN()
 	cpu.initLDR8N16Addr()
+	cpu.initLDN16AddrR8()
 
 	// Required for initial cpu step, basically a NOP
 	cpu.instructionLen = len(cpu.instructions[cpu.registers.IR])
@@ -134,4 +135,8 @@ func (cpu *CPU) initLDHLAddrN() {
 
 func (cpu *CPU) initLDR8N16Addr() {
 	cpu.instructions[0xFA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ldR8Temp('A')}
+}
+
+func (cpu *CPU) initLDN16AddrR8() {
+	cpu.instructions[0xEA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ldR16AddrR8("TempAddr", 'A')}
 }
