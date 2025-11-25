@@ -78,7 +78,8 @@ func (r *registers) SetTempAddrMsb(v byte) {
 
 // Lsb set also clears tempAddr because there's no use in
 // keeping a Msb part and writing new Lsb
+// TODO: instead of 0-ing addr make its MSB = 0xFF in order to
+// easily support indirect addresses. Also need to rework Msb setter for this
 func (r *registers) SetTempAddrLsb(v byte) {
-	r.tempAddr = 0
 	r.tempAddr = uint16(v)
 }
