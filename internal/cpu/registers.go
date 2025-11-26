@@ -73,13 +73,11 @@ func (r *registers) incPC() {
 }
 
 func (r *registers) SetTempAddrMsb(v byte) {
-	r.tempAddr += uint16(v) << 8
+	r.tempAddr = (uint16(v) << 8) | (r.tempAddr & 0x00FF)
 }
 
-// Lsb set also clears tempAddr because there's no use in
-// keeping a Msb part and writing new Lsb
-// TODO: instead of 0-ing addr make its MSB = 0xFF in order to
-// easily support indirect addresses. Also need to rework Msb setter for this
+// Lsb set also clears prev tempAddr value and writes FF into Msb
+// it is required for indirect addresses where Msb part is always FF
 func (r *registers) SetTempAddrLsb(v byte) {
-	r.tempAddr = uint16(v)
+	r.tempAddr = 0xFF00 + uint16(v)
 }

@@ -140,3 +140,7 @@ func (cpu *CPU) initLDR8N16Addr() {
 func (cpu *CPU) initLDN16AddrR8() {
 	cpu.instructions[0xEA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ldR16AddrR8("TempAddr", 'A')}
 }
+
+func (cpu *CPU) init_LD_A_C_Addr() {
+	cpu.instructions[0xEA] = []func(){cpu.readR8Addr('C'), cpu.ldR8Temp('A')}
+}

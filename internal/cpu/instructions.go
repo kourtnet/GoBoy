@@ -24,6 +24,18 @@ func (cpu *CPU) readR16Addr(rName string) func() {
 	}
 }
 
+func (cpu *CPU) readR8Addr(rName byte) func() {
+	r := cpu.determine8Reg(rName)
+
+	return func() {
+		var err error
+		cpu.registers.temp, err = cpu.bus.Read(0xFF00 + uint16(*r))
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 func (cpu *CPU) readAddrLsb() {
 	cpu.readPCMemAndInc()
 	cpu.registers.SetTempAddrLsb(cpu.registers.temp)
