@@ -145,3 +145,23 @@ func (cpu *CPU) ldR8AddrR8(r1Name byte, r2Name byte) func() {
 func (cpu *CPU) ldHLAddrTemp() {
 	cpu.bus.Write(cpu.registers.HL(), cpu.registers.temp)
 }
+
+func (cpu *CPU) read_HL_Addr_Dec() {
+	cpu.readR16Addr("HL")
+	cpu.registers.decHL()
+}
+
+func (cpu *CPU) read_HL_Addr_Inc() {
+	cpu.readR16Addr("HL")
+	cpu.registers.incHL()
+}
+
+func (cpu *CPU) ld_HL_Addr_A_Dec() {
+	cpu.bus.Write(cpu.registers.HL(), cpu.registers.A)
+	cpu.registers.incHL()
+}
+
+func (cpu *CPU) ld_HL_Addr_A_Inc() {
+	cpu.bus.Write(cpu.registers.HL(), cpu.registers.A)
+	cpu.registers.decHL()
+}

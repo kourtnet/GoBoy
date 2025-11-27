@@ -72,6 +72,22 @@ func (r *registers) incPC() {
 	r.pc++
 }
 
+func (r *registers) incHL() {
+	HL := r.HL()
+	HL++
+
+	r.H = byte(HL >> 8)
+	r.L = byte(HL & 0x00FF)
+}
+
+func (r *registers) decHL() {
+	HL := r.HL()
+	HL--
+
+	r.H = byte(HL >> 8)
+	r.L = byte(HL & 0x00FF)
+}
+
 func (r *registers) SetTempAddrMsb(v byte) {
 	r.tempAddr = (uint16(v) << 8) | (r.tempAddr & 0x00FF)
 }

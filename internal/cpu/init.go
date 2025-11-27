@@ -16,20 +16,16 @@ func New(bus *bus.Bus) CPU {
 
 	// instruction set
 	// nop
-	cpu.initNOP()
+	cpu.init_NOP()
 
 	// ld
-	cpu.initLDR8R8()
-	cpu.initLDR8N8()
-	cpu.initLDR8R16Addr()
-	cpu.initLDR16AddrR8()
-	cpu.initLDHLAddrN()
-	cpu.initLDR8N16Addr()
-	cpu.initLDN16AddrR8()
-	cpu.init_LDH_A_C_Addr()
-	cpu.init_LDH_C_Addr_A()
-	cpu.init_LDH_A_N8_Addr()
-	cpu.init_LDH_N8_Addr_A()
+	cpu.init_LD_R8_R8()
+	cpu.init_LD_R8_N8()
+	cpu.init_LD_R8_R16_Addr()
+	cpu.init_LD_R16_Addr_R8()
+	cpu.init_LD_N16_Addr()
+	cpu.init_LDH()
+	cpu.init_LD_HL_Inc_Dec()
 
 	// Required for initial cpu step, basically a NOP
 	cpu.instructionLen = len(cpu.instructions[cpu.registers.IR])
@@ -37,11 +33,11 @@ func New(bus *bus.Bus) CPU {
 	return cpu
 }
 
-func (cpu *CPU) initNOP() {
+func (cpu *CPU) init_NOP() {
 	cpu.instructions[0x00] = []func(){cpu.nop}
 }
 
-func (cpu *CPU) initLDR8R8() {
+func (cpu *CPU) init_LD_R8_R8() {
 	cpu.instructions[0x40] = []func(){cpu.ldR8R8('B', 'B')}
 	cpu.instructions[0x41] = []func(){cpu.ldR8R8('B', 'C')}
 	cpu.instructions[0x42] = []func(){cpu.ldR8R8('B', 'D')}
@@ -93,7 +89,7 @@ func (cpu *CPU) initLDR8R8() {
 	cpu.instructions[0x7F] = []func(){cpu.ldR8R8('A', 'A')}
 }
 
-func (cpu *CPU) initLDR8N8() {
+func (cpu *CPU) init_LD_R8_N8() {
 	cpu.instructions[0x06] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('B')}
 	cpu.instructions[0x16] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('D')}
 	cpu.instructions[0x26] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('H')}
@@ -103,7 +99,7 @@ func (cpu *CPU) initLDR8N8() {
 	cpu.instructions[0x3E] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('A')}
 }
 
-func (cpu *CPU) initLDR8R16Addr() {
+func (cpu *CPU) init_LD_R8_R16_Addr() {
 	cpu.instructions[0x46] = []func(){cpu.readR16Addr("HL"), cpu.ldR8Temp('B')}
 	cpu.instructions[0x56] = []func(){cpu.readR16Addr("HL"), cpu.ldR8Temp('D')}
 	cpu.instructions[0x66] = []func(){cpu.readR16Addr("HL"), cpu.ldR8Temp('H')}
@@ -118,7 +114,7 @@ func (cpu *CPU) initLDR8R16Addr() {
 
 // Here memory write happens on the first M-cycle. I find it strange, but doc
 // states that it's true. Gonna examine it once I will run test-ROMs
-func (cpu *CPU) initLDR16AddrR8() {
+func (cpu *CPU) init_LD_R16_Addr_R8() {
 	cpu.instructions[0x02] = []func(){cpu.ldR16AddrR8("BC", 'A'), cpu.nop}
 	cpu.instructions[0x12] = []func(){cpu.ldR16AddrR8("DE", 'A'), cpu.nop}
 
@@ -131,32 +127,25 @@ func (cpu *CPU) initLDR16AddrR8() {
 	cpu.instructions[0x77] = []func(){cpu.ldR16AddrR8("HL", 'A'), cpu.nop}
 }
 
-// Here memory write happens on the first M-cycle. I find it strange, but doc
-// states that it's true. Gonna examine it once I will run test-ROMs
-func (cpu *CPU) initLDHLAddrN() {
+func (cpu *CPU) init_LD_N16_Addr() {
+	// Here memory write happens on the first M-cycle. I find it strange, but doc
+	// states that it's true. Gonna examine it once I will run test-ROMs
 	cpu.instructions[0x36] = []func(){cpu.readPCAddrAndInc, cpu.ldHLAddrTemp, cpu.nop}
-}
-
-func (cpu *CPU) initLDR8N16Addr() {
+	cpu.instructions[0xEA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ldR16AddrR8("TempAddr", 'A')}
 	cpu.instructions[0xFA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ldR8Temp('A')}
 }
 
-func (cpu *CPU) initLDN16AddrR8() {
-	cpu.instructions[0xEA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ldR16AddrR8("TempAddr", 'A')}
-}
-
-func (cpu *CPU) init_LDH_A_C_Addr() {
+func (cpu *CPU) init_LDH() {
+	cpu.instructions[0xE0] = []func(){cpu.readPCAddrAndInc, cpu.ldR8AddrR8('T', 'A'), cpu.nop}
+	cpu.instructions[0xE2] = []func(){cpu.ldR8AddrR8('C', 'A'), cpu.nop}
+	cpu.instructions[0xF0] = []func(){cpu.readPCAddrAndInc, cpu.readR8Addr('T'), cpu.ldR8Temp('A')}
 	cpu.instructions[0xF2] = []func(){cpu.readR8Addr('C'), cpu.ldR8Temp('A')}
 }
 
-func (cpu *CPU) init_LDH_C_Addr_A() {
-	cpu.instructions[0xE2] = []func(){cpu.ldR8AddrR8('C', 'A'), cpu.nop}
-}
-
-func (cpu *CPU) init_LDH_A_N8_Addr() {
-	cpu.instructions[0xF0] = []func(){cpu.readPCAddrAndInc, cpu.readR8Addr('T'), cpu.ldR8Temp('A')}
-}
-
-func (cpu *CPU) init_LDH_N8_Addr_A() {
-	cpu.instructions[0xE0] = []func(){cpu.readPCAddrAndInc, cpu.ldR8AddrR8('T', 'A'), cpu.nop}
+// TODO: get rid of temp func
+func (cpu *CPU) init_LD_HL_Inc_Dec() {
+	cpu.instructions[0x22] = []func(){cpu.ld_HL_Addr_A_Inc, cpu.nop}
+	cpu.instructions[0x2A] = []func(){cpu.read_HL_Addr_Inc, cpu.ldR8Temp('A')}
+	cpu.instructions[0x32] = []func(){cpu.ld_HL_Addr_A_Dec, cpu.nop}
+	cpu.instructions[0x3A] = []func(){cpu.read_HL_Addr_Dec, cpu.ldR8Temp('A')}
 }
