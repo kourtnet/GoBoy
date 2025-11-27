@@ -26,8 +26,10 @@ func New(bus *bus.Bus) CPU {
 	cpu.initLDHLAddrN()
 	cpu.initLDR8N16Addr()
 	cpu.initLDN16AddrR8()
-	cpu.init_LD_A_C_Addr()
-	cpu.init_LD_C_Addr_A()
+	cpu.init_LDH_A_C_Addr()
+	cpu.init_LDH_C_Addr_A()
+	cpu.init_LDH_A_N8_Addr()
+	cpu.init_LDH_N8_Addr_A()
 
 	// Required for initial cpu step, basically a NOP
 	cpu.instructionLen = len(cpu.instructions[cpu.registers.IR])
@@ -92,13 +94,13 @@ func (cpu *CPU) initLDR8R8() {
 }
 
 func (cpu *CPU) initLDR8N8() {
-	cpu.instructions[0x06] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('B')}
-	cpu.instructions[0x16] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('D')}
-	cpu.instructions[0x26] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('H')}
-	cpu.instructions[0x0E] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('C')}
-	cpu.instructions[0x1E] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('E')}
-	cpu.instructions[0x2E] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('L')}
-	cpu.instructions[0x3E] = []func(){cpu.readPCMemAndInc, cpu.ldR8Temp('A')}
+	cpu.instructions[0x06] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('B')}
+	cpu.instructions[0x16] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('D')}
+	cpu.instructions[0x26] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('H')}
+	cpu.instructions[0x0E] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('C')}
+	cpu.instructions[0x1E] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('E')}
+	cpu.instructions[0x2E] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('L')}
+	cpu.instructions[0x3E] = []func(){cpu.readPCAddrAndInc, cpu.ldR8Temp('A')}
 }
 
 func (cpu *CPU) initLDR8R16Addr() {
@@ -132,7 +134,7 @@ func (cpu *CPU) initLDR16AddrR8() {
 // Here memory write happens on the first M-cycle. I find it strange, but doc
 // states that it's true. Gonna examine it once I will run test-ROMs
 func (cpu *CPU) initLDHLAddrN() {
-	cpu.instructions[0x36] = []func(){cpu.readPCMemAndInc, cpu.ldHLAddrTemp, cpu.nop}
+	cpu.instructions[0x36] = []func(){cpu.readPCAddrAndInc, cpu.ldHLAddrTemp, cpu.nop}
 }
 
 func (cpu *CPU) initLDR8N16Addr() {
@@ -143,10 +145,18 @@ func (cpu *CPU) initLDN16AddrR8() {
 	cpu.instructions[0xEA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ldR16AddrR8("TempAddr", 'A')}
 }
 
-func (cpu *CPU) init_LD_A_C_Addr() {
+func (cpu *CPU) init_LDH_A_C_Addr() {
 	cpu.instructions[0xF2] = []func(){cpu.readR8Addr('C'), cpu.ldR8Temp('A')}
 }
 
-func (cpu *CPU) init_LD_C_Addr_A() {
+func (cpu *CPU) init_LDH_C_Addr_A() {
 	cpu.instructions[0xE2] = []func(){cpu.ldR8AddrR8('C', 'A'), cpu.nop}
+}
+
+func (cpu *CPU) init_LDH_A_N8_Addr() {
+	cpu.instructions[0xF0] = []func(){cpu.readPCAddrAndInc, cpu.readR8Addr('T'), cpu.ldR8Temp('A')}
+}
+
+func (cpu *CPU) init_LDH_N8_Addr_A() {
+	cpu.instructions[0xE0] = []func(){cpu.readPCAddrAndInc, cpu.ldR8AddrR8('T', 'A'), cpu.nop}
 }
