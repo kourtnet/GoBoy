@@ -1,8 +1,7 @@
 package cpu
 
-import "github.com/kourtnet/GoBoy/internal/bus"
-
-func New(bus *bus.Bus) CPU {
+// TODO: integration test
+func New(bus iBus) CPU {
 	cpu := CPU{
 		registers: &registers{
 			pc: 0x100,

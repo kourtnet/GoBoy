@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,8 +25,8 @@ func TestWordRegisterGetters(t *testing.T) {
 		},
 		{
 			0x01,
-			0x01,
-			0x0101,
+			0x02,
+			0x0102,
 		},
 		{
 			0xFF,
@@ -42,26 +43,31 @@ func TestWordRegisterGetters(t *testing.T) {
 	regs := registers{}
 
 	funcs := []struct {
-		foo func() uint16
-		a   *byte
-		b   *byte
+		name string
+		foo  func() uint16
+		a    *byte
+		b    *byte
 	}{
 		{
+			"AF",
 			regs.AF,
 			&regs.A,
 			&regs.F,
 		},
 		{
+			"BC",
 			regs.BC,
 			&regs.B,
 			&regs.C,
 		},
 		{
+			"DE",
 			regs.DE,
 			&regs.D,
 			&regs.E,
 		},
 		{
+			"HL",
 			regs.HL,
 			&regs.H,
 			&regs.L,
@@ -70,11 +76,13 @@ func TestWordRegisterGetters(t *testing.T) {
 
 	for _, f := range funcs {
 		for _, c := range cases {
-			*f.a = c.a
-			*f.b = c.b
+			t.Run(fmt.Sprintf("%s with values %d and %d", f.name, c.a, c.b), func(t *testing.T) {
+				*f.a = c.a
+				*f.b = c.b
 
-			res := f.foo()
-			assert.Equal(t, c.want, res)
+				res := f.foo()
+				assert.Equal(t, c.want, res)
+			})
 		}
 	}
 }

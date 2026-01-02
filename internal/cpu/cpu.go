@@ -3,8 +3,6 @@ package cpu
 
 import (
 	"fmt"
-
-	"github.com/kourtnet/GoBoy/internal/bus"
 )
 
 const instructionsNum = 256
@@ -16,9 +14,10 @@ type CPU struct {
 	step           int
 
 	registers *registers
-	bus       *bus.Bus
+	bus       iBus
 }
 
+// WARNING: full test done
 func (cpu *CPU) fetchOpcode() error {
 	var err error
 	cpu.registers.IR, err = cpu.bus.Read(cpu.registers.PC())
@@ -38,11 +37,13 @@ func (cpu *CPU) fetchOpcode() error {
 	return nil
 }
 
+// TODO: integration test
 func (cpu *CPU) execute() {
 	cpu.instructions[cpu.registers.IR][cpu.opNum]()
 	cpu.opNum++
 }
 
+// TODO: integration test
 func (cpu *CPU) Step() (bool, error) {
 	cpu.step++
 	fmt.Printf("Step %d:\n", cpu.step)
@@ -51,7 +52,7 @@ func (cpu *CPU) Step() (bool, error) {
 	if cpu.opNum == cpu.instructionLen {
 		err := cpu.fetchOpcode()
 		if err != nil {
-			return false, err
+			return true, err
 		}
 	}
 
