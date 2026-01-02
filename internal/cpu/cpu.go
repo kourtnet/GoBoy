@@ -8,10 +8,17 @@ import (
 const instructionsNum = 256
 
 type CPU struct {
-	instructions   [instructionsNum][]func()
+	instructions [instructionsNum][]func()
+
 	instructionLen int
 	opNum          int
 	step           int
+
+	// required for operations that work with external structs (like bus)
+	// and can get an error. Because CPU operations are func(), we can't
+	// process errors properly. So we have to store them into this var
+	// and process later in the Step().
+	internalErr error
 
 	registers *registers
 	bus       iBus
@@ -48,6 +55,9 @@ func (cpu *CPU) Step() (bool, error) {
 	cpu.step++
 	fmt.Printf("Step %d:\n", cpu.step)
 	cpu.execute()
+	if cpu.internalErr != nil {
+		return true, cpu.internalErr
+	}
 
 	if cpu.opNum == cpu.instructionLen {
 		err := cpu.fetchOpcode()

@@ -1,12 +1,11 @@
 package cpu
 
-// have to panic here, cause func is used in cpu.instructions array
-// TODO: figure out proper error handling
 func (cpu *CPU) readPCAddrAndInc() {
 	var err error
 	cpu.registers.temp, err = cpu.bus.Read(cpu.registers.PC())
 	if err != nil {
-		panic(err)
+		cpu.internalErr = err
+		return
 	}
 
 	cpu.registers.incPC()
@@ -19,7 +18,8 @@ func (cpu *CPU) readR16Addr(rName string) func() {
 		var err error
 		cpu.registers.temp, err = cpu.bus.Read(r())
 		if err != nil {
-			panic(err)
+			cpu.internalErr = err
+			return
 		}
 	}
 }
@@ -31,7 +31,8 @@ func (cpu *CPU) readR8Addr(rName byte) func() {
 		var err error
 		cpu.registers.temp, err = cpu.bus.Read(0xFF00 + uint16(*r))
 		if err != nil {
-			panic(err)
+			cpu.internalErr = err
+			return
 		}
 	}
 }
@@ -63,7 +64,6 @@ func (cpu *CPU) determine8Reg(rName byte) *byte {
 	case 'L':
 		return &cpu.registers.L
 	// Special processing for easier memory reading with immediate addr
-	// TODO: change name
 	case 'T':
 		return &cpu.registers.temp
 	default:
