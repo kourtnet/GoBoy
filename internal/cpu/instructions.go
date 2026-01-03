@@ -1,7 +1,10 @@
 package cpu
 
+import "errors"
+
 func (cpu *CPU) readPCAddrAndInc() {
 	var err error
+
 	cpu.registers.temp, err = cpu.bus.Read(cpu.registers.PC())
 	if err != nil {
 		cpu.internalErr = err
@@ -13,6 +16,9 @@ func (cpu *CPU) readPCAddrAndInc() {
 
 func (cpu *CPU) readR16Addr(rName string) func() {
 	r := cpu.determine16Reg(rName)
+	if cpu.internalErr != nil {
+		return func() {}
+	}
 
 	return func() {
 		var err error
@@ -26,6 +32,9 @@ func (cpu *CPU) readR16Addr(rName string) func() {
 
 func (cpu *CPU) readR8Addr(rName byte) func() {
 	r := cpu.determine8Reg(rName)
+	if cpu.internalErr != nil {
+		return func() {}
+	}
 
 	return func() {
 		var err error
@@ -48,6 +57,8 @@ func (cpu *CPU) readAddrMsb() {
 }
 
 func (cpu *CPU) determine8Reg(rName byte) *byte {
+	var errReg byte
+
 	switch rName {
 	case 'A':
 		return &cpu.registers.A
@@ -67,7 +78,8 @@ func (cpu *CPU) determine8Reg(rName byte) *byte {
 	case 'T':
 		return &cpu.registers.temp
 	default:
-		panic("unknown register name " + string(rName))
+		cpu.internalErr = errors.New("unknown register name " + string(rName))
+		return &errReg
 	}
 }
 
@@ -89,7 +101,8 @@ func (cpu *CPU) determine16Reg(rName string) func() uint16 {
 	case "TempAddr":
 		return cpu.registers.TempAddr
 	default:
-		panic("unknown register name " + rName)
+		cpu.internalErr = errors.New("unknown register name " + rName)
+		return func() uint16 { return 0 }
 	}
 }
 

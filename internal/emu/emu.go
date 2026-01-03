@@ -23,7 +23,12 @@ func Run() {
 		os.Exit(2)
 	}
 
-	cpu := cpu.New(bus)
+	cpu, err := cpu.New(bus)
+	if err != nil {
+		// TODO: hide internal error in prod
+		fmt.Println(err.Error())
+		os.Exit(2)
+	}
 
 	var cpuEnd bool
 	for ; err == nil && !cpuEnd; cpuEnd, err = cpu.Step() {

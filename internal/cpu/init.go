@@ -1,7 +1,7 @@
 package cpu
 
 // TODO: integration test
-func New(bus iBus) CPU {
+func New(bus iBus) (CPU, error) {
 	cpu := CPU{
 		registers: &registers{
 			pc: 0x100,
@@ -9,9 +9,6 @@ func New(bus iBus) CPU {
 
 		bus: bus,
 	}
-
-	cpu.instructions[0x0] = []func(){cpu.nop}
-	cpu.instructions[0x3C] = []func(){cpu.incA}
 
 	// instruction set
 	// nop
@@ -26,10 +23,16 @@ func New(bus iBus) CPU {
 	cpu.init_LDH()
 	cpu.init_LD_HL_Inc_Dec()
 
+	// Can happen after init functions if determine8/16Reg would
+	// get invalid register name
+	if cpu.internalErr != nil {
+		return CPU{}, cpu.internalErr
+	}
+
 	// Required for initial cpu step, basically a NOP
 	cpu.instructionLen = len(cpu.instructions[cpu.registers.IR])
 
-	return cpu
+	return cpu, nil
 }
 
 func (cpu *CPU) init_NOP() {
