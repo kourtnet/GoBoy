@@ -47,7 +47,7 @@ func Test_readPCAddrAndInc(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			cpu.registers.temp = 0
+			cpu.registers.Temp = 0
 			cpu.registers.pc = c.PC
 
 			cpu.readPCAddrAndInc()
@@ -57,7 +57,7 @@ func Test_readPCAddrAndInc(t *testing.T) {
 				assert.Equal(t, cpu.registers.pc, c.PC)
 			} else {
 				assert.NoError(t, cpu.internalErr)
-				assert.Equal(t, cpu.registers.temp, c.retVal)
+				assert.Equal(t, cpu.registers.Temp, c.retVal)
 				assert.Equal(t, cpu.registers.pc, c.PC+1)
 			}
 		})
@@ -94,12 +94,16 @@ func Test_determine8Reg(t *testing.T) {
 			reg:  &cpu.registers.C,
 		},
 		{
+			name: 'E',
+			reg:  &cpu.registers.E,
+		},
+		{
 			name: 'L',
 			reg:  &cpu.registers.L,
 		},
 		{
 			name: 'T',
-			reg:  &cpu.registers.temp,
+			reg:  &cpu.registers.Temp,
 		},
 		{
 			name:    'U',
@@ -115,7 +119,7 @@ func Test_determine8Reg(t *testing.T) {
 				assert.Error(t, cpu.internalErr)
 			} else {
 				assert.NoError(t, cpu.internalErr)
-				assert.Equal(t, c.reg, res)
+				assert.True(t, c.reg == res)
 			}
 		})
 	}
@@ -230,7 +234,7 @@ func Test_readR16Addr(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			cpu.registers.temp = 0
+			cpu.registers.Temp = 0
 			cpu.registers.pc = c.PC
 
 			cpu.readPCAddrAndInc()
@@ -240,7 +244,7 @@ func Test_readR16Addr(t *testing.T) {
 				assert.Equal(t, cpu.registers.pc, c.PC)
 			} else {
 				assert.NoError(t, cpu.internalErr)
-				assert.Equal(t, cpu.registers.temp, c.retVal)
+				assert.Equal(t, cpu.registers.Temp, c.retVal)
 				assert.Equal(t, cpu.registers.pc, c.PC+1)
 			}
 		})
