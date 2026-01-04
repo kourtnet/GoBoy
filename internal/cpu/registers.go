@@ -17,7 +17,7 @@ type registers struct {
 	sp uint16
 
 	// temporary regs
-	temp     byte
+	Temp     byte
 	tempAddr uint16
 }
 

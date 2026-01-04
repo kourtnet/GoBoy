@@ -1,3 +1,7 @@
 roms
+<<<<<<< HEAD
 coverage.out
 coverage.html
+=======
+build
+>>>>>>> 3d286f7 (LD_8bit: fix merge conflict)

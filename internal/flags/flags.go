@@ -3,8 +3,8 @@ package flags
 
 import (
 	"flag"
-	"fmt"
-	"os"
+
+	"github.com/kourtnet/GoBoy/internal/die"
 )
 
 type Flags struct {
@@ -12,12 +12,11 @@ type Flags struct {
 }
 
 func (f *Flags) MustParse() {
-	flag.StringVar(&f.RomFile, "rom", "", "full name of the ROM file")
+	flag.StringVar(&f.RomFile, "rom", "", "path to the ROM file")
 
 	flag.Parse()
 
 	if f.RomFile == "" {
-		fmt.Println("ROM filepath is empty")
-		os.Exit(2)
+		die.Die("ROM filepath is empty")
 	}
 }

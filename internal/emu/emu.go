@@ -2,11 +2,9 @@
 package emu
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/kourtnet/GoBoy/internal/bus"
 	"github.com/kourtnet/GoBoy/internal/cpu"
+	"github.com/kourtnet/GoBoy/internal/die"
 	"github.com/kourtnet/GoBoy/internal/flags"
 	"github.com/kourtnet/GoBoy/internal/romload"
 )
@@ -19,23 +17,21 @@ func Run() {
 
 	err := romload.Load(flags.RomFile, bus)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(2)
+		die.Die(err.Error())
 	}
 
 	cpu, err := cpu.New(bus)
 	if err != nil {
 		// TODO: hide internal error in prod
-		fmt.Println(err.Error())
-		os.Exit(2)
+		die.Die(err.Error())
 	}
 
 	var cpuEnd bool
+	// TODO: move error check into loop
 	for ; err == nil && !cpuEnd; cpuEnd, err = cpu.Step() {
 	}
 
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(2)
+		die.Die(err.Error())
 	}
 }

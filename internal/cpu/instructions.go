@@ -2,10 +2,17 @@ package cpu
 
 import "errors"
 
+// this part of package contains funcs with undescore symbols in
+// tneir names. It's intentional and is used only for functions
+// that contain CPU instruction in their names.
+// For example:
+// LD R8, R8 -> ld_R8_R8
+// LD [R8], R8 -> ld_R8_Addr_R8
+// have to panic here, cause func is used in cpu.instructions array
 func (cpu *CPU) readPCAddrAndInc() {
 	var err error
 
-	cpu.registers.temp, err = cpu.bus.Read(cpu.registers.PC())
+	cpu.registers.Temp, err = cpu.bus.Read(cpu.registers.PC())
 	if err != nil {
 		cpu.internalErr = err
 		return
@@ -22,7 +29,7 @@ func (cpu *CPU) readR16Addr(rName string) func() {
 
 	return func() {
 		var err error
-		cpu.registers.temp, err = cpu.bus.Read(r())
+		cpu.registers.Temp, err = cpu.bus.Read(r())
 		if err != nil {
 			cpu.internalErr = err
 			return
@@ -38,7 +45,7 @@ func (cpu *CPU) readR8Addr(rName byte) func() {
 
 	return func() {
 		var err error
-		cpu.registers.temp, err = cpu.bus.Read(0xFF00 + uint16(*r))
+		cpu.registers.Temp, err = cpu.bus.Read(0xFF00 + uint16(*r))
 		if err != nil {
 			cpu.internalErr = err
 			return
@@ -48,12 +55,12 @@ func (cpu *CPU) readR8Addr(rName byte) func() {
 
 func (cpu *CPU) readAddrLsb() {
 	cpu.readPCAddrAndInc()
-	cpu.registers.SetTempAddrLsb(cpu.registers.temp)
+	cpu.registers.SetTempAddrLsb(cpu.registers.Temp)
 }
 
 func (cpu *CPU) readAddrMsb() {
 	cpu.readPCAddrAndInc()
-	cpu.registers.SetTempAddrMsb(cpu.registers.temp)
+	cpu.registers.SetTempAddrMsb(cpu.registers.Temp)
 }
 
 func (cpu *CPU) determine8Reg(rName byte) *byte {
@@ -76,7 +83,7 @@ func (cpu *CPU) determine8Reg(rName byte) *byte {
 		return &cpu.registers.L
 	// Special processing for easier memory reading with immediate addr
 	case 'T':
-		return &cpu.registers.temp
+		return &cpu.registers.Temp
 	default:
 		cpu.internalErr = errors.New("unknown register name " + string(rName))
 		return &errReg
@@ -110,11 +117,12 @@ func (cpu *CPU) nop() {
 }
 
 // TODO: ADD FLAGS AND OUT OF RANGE ARITHMETICS
+// WARNING: IS UNUSED NOW
 func (cpu *CPU) incA() {
 	cpu.registers.A++
 }
 
-func (cpu *CPU) ldR8R8(r1Name, r2Name byte) func() {
+func (cpu *CPU) ld_R8_R8(r1Name, r2Name byte) func() {
 	if r1Name == r2Name {
 		return func() {}
 	}
@@ -127,16 +135,15 @@ func (cpu *CPU) ldR8R8(r1Name, r2Name byte) func() {
 	}
 }
 
-// Requires fetchData as first procedure in instruction
-func (cpu *CPU) ldR8Temp(rName byte) func() {
+func (cpu *CPU) ld_R8_Temp(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		*r = cpu.registers.temp
+		*r = cpu.registers.Temp
 	}
 }
 
-func (cpu *CPU) ldR16AddrR8(r16Name string, r8Name byte) func() {
+func (cpu *CPU) ld_R16_Addr_R8(r16Name string, r8Name byte) func() {
 	r16 := cpu.determine16Reg(r16Name)
 	r8 := cpu.determine8Reg(r8Name)
 
@@ -145,7 +152,7 @@ func (cpu *CPU) ldR16AddrR8(r16Name string, r8Name byte) func() {
 	}
 }
 
-func (cpu *CPU) ldR8AddrR8(r1Name byte, r2Name byte) func() {
+func (cpu *CPU) ld_R8_Addr_R8(r1Name byte, r2Name byte) func() {
 	r1 := cpu.determine8Reg(r1Name)
 	r2 := cpu.determine8Reg(r2Name)
 
@@ -156,15 +163,15 @@ func (cpu *CPU) ldR8AddrR8(r1Name byte, r2Name byte) func() {
 
 // there's no LD [R16], N8 instructions rather then with HL
 func (cpu *CPU) ldHLAddrTemp() {
-	cpu.bus.Write(cpu.registers.HL(), cpu.registers.temp)
+	cpu.bus.Write(cpu.registers.HL(), cpu.registers.Temp)
 }
 
-func (cpu *CPU) read_HL_Addr_Dec() {
+func (cpu *CPU) readHLAddrDec() {
 	cpu.readR16Addr("HL")
 	cpu.registers.decHL()
 }
 
-func (cpu *CPU) read_HL_Addr_Inc() {
+func (cpu *CPU) readHLAddrInc() {
 	cpu.readR16Addr("HL")
 	cpu.registers.incHL()
 }
