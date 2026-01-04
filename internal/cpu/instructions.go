@@ -2,19 +2,19 @@ package cpu
 
 import "errors"
 
-// this part of package contains funcs with undescore symbols in
-// tneir names. It's intentional and is used only for functions
-// that contain CPU instruction in their names.
-// For example:
-// LD R8, R8 -> ld_R8_R8
-// LD [R8], R8 -> ld_R8_Addr_R8
-// have to panic here, cause func is used in cpu.instructions array
-func (cpu *CPU) readPCAddrAndInc() {
+func (cpu *CPU) readAddr(addr uint16) {
 	var err error
 
-	cpu.registers.Temp, err = cpu.bus.Read(cpu.registers.PC())
+	cpu.registers.Temp, err = cpu.bus.Read(addr)
 	if err != nil {
 		cpu.internalErr = err
+		return
+	}
+}
+
+func (cpu *CPU) readPCAddrAndInc() {
+	cpu.readAddr(cpu.registers.pc)
+	if cpu.internalErr != nil {
 		return
 	}
 
@@ -28,28 +28,18 @@ func (cpu *CPU) readR16Addr(rName string) func() {
 	}
 
 	return func() {
-		var err error
-		cpu.registers.Temp, err = cpu.bus.Read(r())
-		if err != nil {
-			cpu.internalErr = err
-			return
-		}
+		cpu.readAddr(r())
 	}
 }
 
 func (cpu *CPU) readR8Addr(rName byte) func() {
-	r := cpu.determine8Reg(rName)
+	r := 0xFF00 + uint16(*cpu.determine8Reg(rName))
 	if cpu.internalErr != nil {
 		return func() {}
 	}
 
 	return func() {
-		var err error
-		cpu.registers.Temp, err = cpu.bus.Read(0xFF00 + uint16(*r))
-		if err != nil {
-			cpu.internalErr = err
-			return
-		}
+		cpu.readAddr(r)
 	}
 }
 
@@ -122,6 +112,12 @@ func (cpu *CPU) incA() {
 	cpu.registers.A++
 }
 
+// this part of package contains funcs with undescore symbols in
+// tneir names. It's intentional and is used only for functions
+// that contain CPU instruction in their names.
+// For example:
+// LD R8, R8 -> ld_R8_R8
+// LD [R8], R8 -> ld_R8_Addr_R8
 func (cpu *CPU) ld_R8_R8(r1Name, r2Name byte) func() {
 	if r1Name == r2Name {
 		return func() {}

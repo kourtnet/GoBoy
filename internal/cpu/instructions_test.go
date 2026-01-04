@@ -9,22 +9,22 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func Test_readPCAddrAndInc(t *testing.T) {
+func Test_readAddr(t *testing.T) {
 	cases := []struct {
 		name    string
-		PC      uint16
+		addr    uint16
 		wantErr bool
 		retVal  uint8
 	}{
 		{
 			name:    "Read completes succesfully",
-			PC:      0,
+			addr:    0,
 			wantErr: false,
 			retVal:  0xAE,
 		},
 		{
 			name:    "Read returns error",
-			PC:      1,
+			addr:    1,
 			wantErr: true,
 		},
 	}
@@ -35,10 +35,10 @@ func Test_readPCAddrAndInc(t *testing.T) {
 	busMock := mocks.NewMockiBus(ctrl)
 
 	busMock.EXPECT().
-		Read(cases[0].PC).
+		Read(cases[0].addr).
 		Return(cases[0].retVal, nil)
 	busMock.EXPECT().
-		Read(cases[1].PC).
+		Read(cases[1].addr).
 		Return(cases[1].retVal, errors.New("error"))
 
 	cpu := CPU{}
@@ -48,17 +48,14 @@ func Test_readPCAddrAndInc(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			cpu.registers.Temp = 0
-			cpu.registers.pc = c.PC
 
-			cpu.readPCAddrAndInc()
+			cpu.readAddr(c.addr)
 
 			if c.wantErr {
 				assert.Error(t, cpu.internalErr)
-				assert.Equal(t, cpu.registers.pc, c.PC)
 			} else {
 				assert.NoError(t, cpu.internalErr)
 				assert.Equal(t, cpu.registers.Temp, c.retVal)
-				assert.Equal(t, cpu.registers.pc, c.PC+1)
 			}
 		})
 	}
@@ -190,62 +187,6 @@ func Test_determine16Reg(t *testing.T) {
 				want := c.reg()
 				get := reg()
 				assert.Equal(t, want, get)
-			}
-		})
-	}
-}
-
-// TODO: FINISH
-func Test_readR16Addr(t *testing.T) {
-	cases := []struct {
-		name    string
-		PC      uint16
-		wantErr bool
-		retVal  uint8
-	}{
-		{
-			name:    "Read completes succesfully",
-			PC:      0,
-			wantErr: false,
-			retVal:  0xAE,
-		},
-		{
-			name:    "Read returns error",
-			PC:      1,
-			wantErr: true,
-		},
-	}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	busMock := mocks.NewMockiBus(ctrl)
-
-	busMock.EXPECT().
-		Read(cases[0].PC).
-		Return(cases[0].retVal, nil)
-	busMock.EXPECT().
-		Read(cases[1].PC).
-		Return(cases[1].retVal, errors.New("error"))
-
-	cpu := CPU{}
-	cpu.bus = busMock
-	cpu.registers = &registers{}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			cpu.registers.Temp = 0
-			cpu.registers.pc = c.PC
-
-			cpu.readPCAddrAndInc()
-
-			if c.wantErr {
-				assert.Error(t, cpu.internalErr)
-				assert.Equal(t, cpu.registers.pc, c.PC)
-			} else {
-				assert.NoError(t, cpu.internalErr)
-				assert.Equal(t, cpu.registers.Temp, c.retVal)
-				assert.Equal(t, cpu.registers.pc, c.PC+1)
 			}
 		})
 	}
