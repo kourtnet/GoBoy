@@ -191,3 +191,21 @@ func Test_determine16Reg(t *testing.T) {
 		})
 	}
 }
+
+func TestLD8(t *testing.T) {
+	ROMPath := "../../testing/roms/ld8.rom"
+	snapPath := "../../testing/snapshots/ld8.snap"
+
+	suite, err := NewTestSuite(ROMPath, snapPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("test LD 8 bit instructions", func(t *testing.T) {
+		for suite.step() {
+			if suite.err != nil {
+				t.Error(suite.err)
+			}
+		}
+	})
+}

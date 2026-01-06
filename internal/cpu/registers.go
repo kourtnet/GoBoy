@@ -4,7 +4,6 @@ import "fmt"
 
 type registers struct {
 	IR byte
-	IE byte
 	A  byte
 	F  byte
 	B  byte
@@ -25,7 +24,6 @@ func (r *registers) String() string {
 	var res string
 
 	res += fmt.Sprintf("IR: %#x ", r.IR)
-	res += fmt.Sprintf("IE: %#x ", r.IE)
 	res += fmt.Sprintf("A: %#x ", r.A)
 	res += fmt.Sprintf("F: %#x ", r.F)
 	res += fmt.Sprintf("B: %#x ", r.B)
