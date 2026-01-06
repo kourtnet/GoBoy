@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"regexp"
@@ -82,27 +83,20 @@ func newSnapshot(A, F, B, C, D, E, H, L byte, PC, SP uint16, memory []byte) snap
 	}
 }
 
-func (s *snapshot) Equal(cpu CPU) (bool, error) {
+func (s *snapshot) Equal(cpu CPU, bus *suiteBus) bool {
 	s.regs.Temp = cpu.registers.Temp
 	s.regs.tempAddr = cpu.registers.tempAddr
 	s.regs.IR = cpu.registers.IR
 
 	if *cpu.registers != s.regs {
-		return false, nil
+		return false
 	}
 
-	//	for i := range s.memory {
-	//		val, err := cpu.bus.Read(uint16(i))
-	//		if err != nil {
-	//			return false, err
-	//		}
-	//
-	//		if s.memory[i] != val {
-	//			return false, nil
-	//		}
-	//	}
+	if !bytes.Equal(s.memory, bus.memory[len(bus.memory)-16:]) {
+		return false
+	}
 
-	return true, nil
+	return true
 }
 
 func hexValue(b byte) byte {
@@ -253,16 +247,21 @@ func (s *testSuite) step() bool {
 		return true
 	}
 
-	eq, err := s.snaps[s.stepNum].Equal(s.cpu)
-	if err != nil {
-		s.err = err
-		return true
-	}
+	eq := s.snaps[s.stepNum].Equal(s.cpu, s.bus)
 
 	if !eq {
-		errFormat := "data mismatch at step %d\n\tcpu registers:   %v\n\tsuite registers: %v"
+		errFormat := `data mismatch at step %d
+	cpu registers:   %v
+	suite registers: %v
+	bus memory:  %v
+	snap memory: %v`
+
 		s.err = fmt.Errorf(errFormat,
-			s.stepNum, *s.cpu.registers, s.snaps[s.stepNum].regs)
+			s.stepNum,
+			*s.cpu.registers,
+			s.snaps[s.stepNum].regs,
+			s.bus.memory[len(s.bus.memory)-16:],
+			s.snaps[s.stepNum].memory)
 		return true
 	}
 
