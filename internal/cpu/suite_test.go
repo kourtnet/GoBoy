@@ -32,12 +32,14 @@ func newSuiteBus(ROMPath string, spareMemory []byte) (*suiteBus, error) {
 	}
 	defer file.Close()
 
-	_, err = file.Read(sb.memory[:memSizeInBytes])
+	_, err = file.Read(sb.memory[:len(sb.memory)-memSizeInBytes])
 	if err != nil {
 		return nil, err
 	}
 
-	copy(sb.memory[memSizeInBytes:], spareMemory)
+	copy(sb.memory[len(sb.memory)-memSizeInBytes:], spareMemory)
+
+	fmt.Printf("%x\n", sb.memory)
 
 	return sb, nil
 }
