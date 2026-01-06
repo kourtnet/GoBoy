@@ -1,6 +1,8 @@
 package cpu
 
-import "errors"
+import (
+	"errors"
+)
 
 func (cpu *CPU) readAddr(addr uint16) {
 	var err error
