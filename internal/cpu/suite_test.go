@@ -20,7 +20,7 @@ func newSuiteBus(ROMPath string, spareMemory []byte) (*suiteBus, error) {
 		return nil, err
 	}
 
-	size := fileStat.Size() + memSizeInBytes
+	size := fileStat.Size() + memSizeInBytes + 1
 
 	sb := &suiteBus{
 		memory: make([]byte, size),
@@ -32,14 +32,12 @@ func newSuiteBus(ROMPath string, spareMemory []byte) (*suiteBus, error) {
 	}
 	defer file.Close()
 
-	_, err = file.Read(sb.memory[:len(sb.memory)-memSizeInBytes])
+	_, err = file.Read(sb.memory[memSizeInBytes:])
 	if err != nil {
 		return nil, err
 	}
 
-	copy(sb.memory[len(sb.memory)-memSizeInBytes:], spareMemory)
-
-	fmt.Printf("%x\n", sb.memory)
+	copy(sb.memory[:memSizeInBytes], spareMemory)
 
 	return sb, nil
 }
@@ -94,7 +92,7 @@ func (s *snapshot) Equal(cpu CPU, bus *suiteBus) bool {
 		return false
 	}
 
-	if !bytes.Equal(s.memory, bus.memory[len(bus.memory)-16:]) {
+	if !bytes.Equal(s.memory, bus.memory[:memSizeInBytes]) {
 		return false
 	}
 
@@ -137,7 +135,7 @@ func hexSliceToBytes(hex []byte) []byte {
 	res := make([]byte, len(hex)/2)
 
 	for i := 0; i < len(hex); i += 2 {
-		res[0] = hexBytesToByte(hex[i], hex[i+1])
+		res[i/2] = hexBytesToByte(hex[i], hex[i+1])
 	}
 
 	return res
@@ -180,7 +178,7 @@ func newSnapshots(snapPath string) ([]snapshot, error) {
 			hexBytesToByte(row[21], row[22]),
 			hexBytesToWord(row[24], row[25], row[26], row[27]),
 			hexBytesToWord(row[29], row[30], row[31], row[32]),
-			hexSliceToBytes(row[:memSizeInBytes*2]),
+			hexSliceToBytes(row[34:]),
 		)
 
 		snaps = append(snaps, snap)
@@ -263,7 +261,7 @@ func (s *testSuite) step() bool {
 			s.stepNum,
 			*s.cpu.registers,
 			s.snaps[s.stepNum].regs,
-			s.bus.memory[len(s.bus.memory)-16:],
+			s.bus.memory[:memSizeInBytes],
 			s.snaps[s.stepNum].memory)
 		return true
 	}

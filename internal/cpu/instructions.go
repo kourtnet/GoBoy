@@ -176,10 +176,10 @@ func (cpu *CPU) readHLAddrInc() {
 
 func (cpu *CPU) ld_HL_Addr_A_Dec() {
 	cpu.bus.Write(cpu.registers.HL(), cpu.registers.A)
-	cpu.registers.incHL()
+	cpu.registers.decHL()
 }
 
 func (cpu *CPU) ld_HL_Addr_A_Inc() {
 	cpu.bus.Write(cpu.registers.HL(), cpu.registers.A)
-	cpu.registers.decHL()
+	cpu.registers.incHL()
 }
