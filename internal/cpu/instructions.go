@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"errors"
+	"fmt"
 )
 
 func (cpu *CPU) readAddr(addr uint16) {
@@ -135,7 +136,7 @@ func (cpu *CPU) ld_R8_R8(r1Name, r2Name byte) func() {
 
 func (cpu *CPU) ld_R8_Temp(rName byte) func() {
 	r := cpu.determine8Reg(rName)
-
+	fmt.Println(r)
 	return func() {
 		*r = cpu.registers.Temp
 	}
@@ -165,12 +166,12 @@ func (cpu *CPU) ldHLAddrTemp() {
 }
 
 func (cpu *CPU) readHLAddrDec() {
-	cpu.readR16Addr("HL")
+	cpu.readR16Addr("HL")()
 	cpu.registers.decHL()
 }
 
 func (cpu *CPU) readHLAddrInc() {
-	cpu.readR16Addr("HL")
+	cpu.readR16Addr("HL")()
 	cpu.registers.incHL()
 }
 
