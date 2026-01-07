@@ -139,7 +139,7 @@ func (cpu *CPU) init_LD_N16_Addr() {
 	// Here memory write happens on the first M-cycle. I find it strange, but doc
 	// states that it's true. Gonna examine it once I will run test-ROMs
 	cpu.instructions[0x36] = []func(){cpu.readPCAddrAndInc, cpu.ldHLAddrTemp, cpu.nop}
-	cpu.instructions[0xEA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ld_R16_Addr_R8("TempAddr", 'A')}
+	cpu.instructions[0xEA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_Addr_R8("TempAddr", 'A'), cpu.nop}
 	cpu.instructions[0xFA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ld_R8_Temp('A')}
 }
 
