@@ -2,7 +2,6 @@ package cpu
 
 import (
 	"errors"
-	"fmt"
 )
 
 func (cpu *CPU) readAddr(addr uint16) {
@@ -106,6 +105,22 @@ func (cpu *CPU) determine16Reg(rName string) func() uint16 {
 	}
 }
 
+func (cpu *CPU) determine16RegSetter(rName string) func(uint16) {
+	switch rName {
+	case "BC":
+		return cpu.registers.SetBC
+	case "DE":
+		return cpu.registers.SetDE
+	case "HL":
+		return cpu.registers.SetHL
+	case "SP":
+		return cpu.registers.SetSP
+	default:
+		cpu.internalErr = errors.New("unknown register name " + rName)
+		return func(uint16) {}
+	}
+}
+
 func (cpu *CPU) nop() {
 }
 
@@ -136,7 +151,6 @@ func (cpu *CPU) ld_R8_R8(r1Name, r2Name byte) func() {
 
 func (cpu *CPU) ld_R8_Temp(rName byte) func() {
 	r := cpu.determine8Reg(rName)
-	fmt.Println(r)
 	return func() {
 		*r = cpu.registers.Temp
 	}
@@ -151,7 +165,7 @@ func (cpu *CPU) ld_R16_Addr_R8(r16Name string, r8Name byte) func() {
 	}
 }
 
-func (cpu *CPU) ld_R8_Addr_R8(r1Name byte, r2Name byte) func() {
+func (cpu *CPU) ld_R8_Addr_R8(r1Name, r2Name byte) func() {
 	r1 := cpu.determine8Reg(r1Name)
 	r2 := cpu.determine8Reg(r2Name)
 
@@ -183,4 +197,13 @@ func (cpu *CPU) ld_HL_Addr_A_Dec() {
 func (cpu *CPU) ld_HL_Addr_A_Inc() {
 	cpu.bus.Write(cpu.registers.HL(), cpu.registers.A)
 	cpu.registers.incHL()
+}
+
+func (cpu *CPU) ld_R16_R16(r1Name, r2Name string) func() {
+	r1 := cpu.determine16RegSetter(r1Name)
+	r2 := cpu.determine16Reg(r2Name)
+
+	return func() {
+		r1(r2())
+	}
 }

@@ -39,6 +39,7 @@ func (cpu *CPU) initInstructions() {
 	cpu.init_LD_N16_Addr()
 	cpu.init_LDH()
 	cpu.init_LD_HL_Inc_Dec()
+	cpu.init_LD_16bit()
 }
 
 func (cpu *CPU) init_NOP() {
@@ -144,6 +145,7 @@ func (cpu *CPU) init_LD_N16_Addr() {
 }
 
 func (cpu *CPU) init_LDH() {
+	// WARNING: not tested by ROMs
 	cpu.instructions[0xE0] = []func(){cpu.readPCAddrAndInc, cpu.ld_R8_Addr_R8('T', 'A'), cpu.nop}
 	cpu.instructions[0xE2] = []func(){cpu.ld_R8_Addr_R8('C', 'A'), cpu.nop}
 	cpu.instructions[0xF0] = []func(){cpu.readPCAddrAndInc, cpu.readR8Addr('T'), cpu.ld_R8_Temp('A')}
@@ -156,4 +158,8 @@ func (cpu *CPU) init_LD_HL_Inc_Dec() {
 	cpu.instructions[0x2A] = []func(){cpu.readHLAddrInc, cpu.ld_R8_Temp('A')}
 	cpu.instructions[0x32] = []func(){cpu.ld_HL_Addr_A_Dec, cpu.nop}
 	cpu.instructions[0x3A] = []func(){cpu.readHLAddrDec, cpu.ld_R8_Temp('A')}
+}
+
+func (cpu *CPU) init_LD_16bit() {
+	cpu.instructions[0x01] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("BC", "TempAddr")}
 }

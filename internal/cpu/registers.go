@@ -38,20 +38,47 @@ func (r *registers) String() string {
 	return res
 }
 
+func (r *registers) r8R8ToR16(r1, r2 byte) uint16 {
+	return uint16(r1)<<8 + uint16(r2)
+}
+
+func (r *registers) r16Msb(reg uint16) byte {
+	return byte(reg >> 8)
+}
+
+func (r *registers) r16Lsb(reg uint16) byte {
+	return byte(reg & 0x00FF)
+}
+
 func (r *registers) AF() uint16 {
-	return uint16(r.A)<<8 + uint16(r.F)
+	return r.r8R8ToR16(r.A, r.F)
 }
 
 func (r *registers) BC() uint16 {
-	return uint16(r.B)<<8 + uint16(r.C)
+	return r.r8R8ToR16(r.B, r.C)
+}
+
+func (r *registers) SetBC(val uint16) {
+	r.B = r.r16Msb(val)
+	r.C = r.r16Lsb(val)
 }
 
 func (r *registers) DE() uint16 {
-	return uint16(r.D)<<8 + uint16(r.E)
+	return r.r8R8ToR16(r.D, r.E)
+}
+
+func (r *registers) SetDE(val uint16) {
+	r.D = r.r16Msb(val)
+	r.E = r.r16Lsb(val)
 }
 
 func (r *registers) HL() uint16 {
-	return uint16(r.H)<<8 + uint16(r.L)
+	return r.r8R8ToR16(r.H, r.L)
+}
+
+func (r *registers) SetHL(val uint16) {
+	r.H = r.r16Msb(val)
+	r.L = r.r16Lsb(val)
 }
 
 func (r *registers) PC() uint16 {
@@ -60,6 +87,10 @@ func (r *registers) PC() uint16 {
 
 func (r *registers) SP() uint16 {
 	return r.sp
+}
+
+func (r *registers) SetSP(val uint16) {
+	r.sp = val
 }
 
 func (r *registers) TempAddr() uint16 {
@@ -74,24 +105,22 @@ func (r *registers) incHL() {
 	HL := r.HL()
 	HL++
 
-	r.H = byte(HL >> 8)
-	r.L = byte(HL & 0x00FF)
+	r.SetHL(HL)
 }
 
 func (r *registers) decHL() {
 	HL := r.HL()
 	HL--
 
-	r.H = byte(HL >> 8)
-	r.L = byte(HL & 0x00FF)
+	r.SetHL(HL)
 }
 
 func (r *registers) SetTempAddrMsb(v byte) {
-	r.tempAddr = (uint16(v) << 8) | (r.tempAddr & 0x00FF)
+	r.tempAddr = r.r8R8ToR16(v, r.r16Lsb(r.tempAddr))
 }
 
 // Lsb set also clears prev tempAddr value and writes FF into Msb
 // it is required for indirect addresses where Msb part is always FF
 func (r *registers) SetTempAddrLsb(v byte) {
-	r.tempAddr = 0xFF00 + uint16(v)
+	r.tempAddr = r.r8R8ToR16(0xFF, v)
 }
