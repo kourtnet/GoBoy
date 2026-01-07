@@ -252,13 +252,14 @@ func (s *testSuite) step() bool {
 	eq := s.snaps[s.stepNum].Equal(s.cpu, s.bus)
 
 	if !eq {
-		errFormat := `data mismatch at step %d
+		errFormat := `data mismatch at step %d (0x%x)
 	cpu registers:   %v
 	suite registers: %v
 	bus memory:  %v
 	snap memory: %v`
 
 		s.err = fmt.Errorf(errFormat,
+			s.stepNum,
 			s.stepNum,
 			*s.cpu.registers,
 			s.snaps[s.stepNum].regs,
