@@ -213,6 +213,7 @@ func NewTestSuite(ROMPath, SnapPath string) (*testSuite, error) {
 		return nil, err
 	}
 
+	// TODO: ???
 	cpu.registers.A = snaps[0].regs.A
 	cpu.registers.F = snaps[0].regs.F
 	cpu.registers.B = snaps[0].regs.B
