@@ -165,6 +165,9 @@ func (cpu *CPU) init_LD_HL_Inc_Dec() {
 }
 
 func (cpu *CPU) init_LD16() {
+	// LD SP, HL
+	cpu.instructions[0xF9] = []func(){cpu.ld_R16_R16("SP", "HL"), cpu.nop}
+
 	cpu.init_LD_R16_N16()
 }
 
