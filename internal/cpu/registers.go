@@ -58,6 +58,11 @@ func (r *registers) AF() uint16 {
 	return r.r8R8ToR16(r.A, r.F)
 }
 
+func (r *registers) SetAF(val uint16) {
+	r.A = r.r16Msb(val)
+	r.F = r.r16Lsb(val)
+}
+
 func (r *registers) BC() uint16 {
 	return r.r8R8ToR16(r.B, r.C)
 }
@@ -157,10 +162,6 @@ func (r *registers) SPH() byte {
 
 func (r *registers) TempAddr() uint16 {
 	return r.tempAddr
-}
-
-func (r *registers) IncTempAddr() {
-	r.tempAddr++
 }
 
 func (r *registers) IncPC() {

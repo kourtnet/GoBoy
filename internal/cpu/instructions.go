@@ -118,6 +118,8 @@ func (cpu *CPU) determine16RegSetter(rName string) func(uint16) {
 		return cpu.registers.SetHL
 	case "SP":
 		return cpu.registers.SetSP
+	case "AF":
+		return cpu.registers.SetAF
 	default:
 		cpu.internalErr = errors.New("unknown register name " + rName)
 		return func(uint16) {}
@@ -134,8 +136,6 @@ func (cpu *CPU) determine16RegInc(rName string) func() {
 		return cpu.registers.IncHL
 	case "SP":
 		return cpu.registers.IncSP
-	case "TempAddr":
-		return cpu.registers.IncTempAddr
 	default:
 		cpu.internalErr = errors.New("unknown register name " + rName)
 		return func() {}
@@ -269,4 +269,16 @@ func (cpu *CPU) ld_R16_Addr_R8_Inc(r1Name string, r2Name byte) func() {
 		cpu.bus.Write(r1(), *r2)
 		r1Inc()
 	}
+}
+
+func (cpu *CPU) popLsb() {
+	cpu.readAddr(cpu.registers.sp)
+	cpu.registers.SetTempAddrLsb(cpu.registers.Temp)
+	cpu.registers.IncSP()
+}
+
+func (cpu *CPU) popMsb() {
+	cpu.readAddr(cpu.registers.sp)
+	cpu.registers.SetTempAddrMsb(cpu.registers.Temp)
+	cpu.registers.IncSP()
 }

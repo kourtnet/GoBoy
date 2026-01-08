@@ -172,6 +172,7 @@ func (cpu *CPU) init_LD16() {
 
 	cpu.init_LD_R16_N16()
 	cpu.InitPush()
+	cpu.InitPop()
 }
 
 func (cpu *CPU) init_LD_R16_N16() {
@@ -186,4 +187,11 @@ func (cpu *CPU) InitPush() {
 	cpu.instructions[0xD5] = []func(){cpu.decSp, cpu.ld_R16_Addr_R8_Dec("SP", 'D'), cpu.ld_R16_Addr_R8("SP", 'E'), cpu.nop}
 	cpu.instructions[0xE5] = []func(){cpu.decSp, cpu.ld_R16_Addr_R8_Dec("SP", 'H'), cpu.ld_R16_Addr_R8("SP", 'L'), cpu.nop}
 	cpu.instructions[0xF5] = []func(){cpu.decSp, cpu.ld_R16_Addr_R8_Dec("SP", 'A'), cpu.ld_R16_Addr_R8("SP", 'F'), cpu.nop}
+}
+
+func (cpu *CPU) InitPop() {
+	cpu.instructions[0xC1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("BC", "TempAddr")}
+	cpu.instructions[0xD1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("DE", "TempAddr")}
+	cpu.instructions[0xE1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("HL", "TempAddr")}
+	cpu.instructions[0xF1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("AF", "TempAddr")}
 }
