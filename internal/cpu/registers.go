@@ -109,18 +109,18 @@ func (r *registers) TempAddr() uint16 {
 	return r.tempAddr
 }
 
-func (r *registers) incPC() {
+func (r *registers) IncPC() {
 	r.pc++
 }
 
-func (r *registers) incHL() {
+func (r *registers) IncHL() {
 	HL := r.HL()
 	HL++
 
 	r.SetHL(HL)
 }
 
-func (r *registers) decHL() {
+func (r *registers) DecHL() {
 	HL := r.HL()
 	HL--
 

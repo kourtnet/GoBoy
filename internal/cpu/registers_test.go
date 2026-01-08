@@ -107,7 +107,7 @@ func TestIncHL(t *testing.T) {
 			regs.H = byte(c.val >> 8)
 			regs.L = byte(c.val & 0x00FF)
 
-			regs.incHL()
+			regs.IncHL()
 			assert.Equal(t, c.val+1, regs.HL())
 		})
 	}
@@ -130,7 +130,7 @@ func TestDecHL(t *testing.T) {
 			regs.H = byte(c.val >> 8)
 			regs.L = byte(c.val & 0x00FF)
 
-			regs.decHL()
+			regs.DecHL()
 			assert.Equal(t, c.val-1, regs.HL())
 		})
 	}

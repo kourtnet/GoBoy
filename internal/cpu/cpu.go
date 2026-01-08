@@ -38,7 +38,7 @@ func (cpu *CPU) fetchOpcode() error {
 		return fmt.Errorf("unknown opcode at: 0x%x", cpu.registers.PC())
 	}
 
-	cpu.registers.incPC()
+	cpu.registers.IncPC()
 
 	return nil
 }

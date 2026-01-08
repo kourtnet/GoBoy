@@ -20,7 +20,7 @@ func (cpu *CPU) readPCAddrAndInc() {
 		return
 	}
 
-	cpu.registers.incPC()
+	cpu.registers.IncPC()
 }
 
 func (cpu *CPU) readR16Addr(rName string) func() {
@@ -105,6 +105,7 @@ func (cpu *CPU) determine16Reg(rName string) func() uint16 {
 	}
 }
 
+// TODO: test
 func (cpu *CPU) determine16RegSetter(rName string) func(uint16) {
 	switch rName {
 	case "BC":
@@ -181,22 +182,22 @@ func (cpu *CPU) ldHLAddrTemp() {
 
 func (cpu *CPU) readHLAddrDec() {
 	cpu.readR16Addr("HL")()
-	cpu.registers.decHL()
+	cpu.registers.DecHL()
 }
 
 func (cpu *CPU) readHLAddrInc() {
 	cpu.readR16Addr("HL")()
-	cpu.registers.incHL()
+	cpu.registers.IncHL()
 }
 
 func (cpu *CPU) ld_HL_Addr_A_Dec() {
 	cpu.bus.Write(cpu.registers.HL(), cpu.registers.A)
-	cpu.registers.decHL()
+	cpu.registers.DecHL()
 }
 
 func (cpu *CPU) ld_HL_Addr_A_Inc() {
 	cpu.bus.Write(cpu.registers.HL(), cpu.registers.A)
-	cpu.registers.incHL()
+	cpu.registers.IncHL()
 }
 
 func (cpu *CPU) ld_R16_R16(r1Name, r2Name string) func() {
