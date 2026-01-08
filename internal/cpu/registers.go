@@ -2,6 +2,13 @@ package cpu
 
 import "fmt"
 
+const (
+	flagZ uint8 = 0b10000000
+	flagN uint8 = 0b01000000
+	flagH uint8 = 0b00100000
+	flagC uint8 = 0b00010000
+)
+
 type registers struct {
 	IR byte
 	A  byte
@@ -166,6 +173,50 @@ func (r *registers) TempAddr() uint16 {
 
 func (r *registers) IncPC() {
 	r.pc++
+}
+
+func (r *registers) setFlag(mask uint8, val bool) {
+	if val {
+		r.F |= mask
+	} else {
+		r.F &^= mask
+	}
+}
+
+func (r *registers) getFlag(mask uint8) bool {
+	return (r.F & mask) != 0
+}
+
+func (r *registers) SetFlagZ(val bool) {
+	r.setFlag(flagZ, val)
+}
+
+func (r *registers) GetFlagZ() bool {
+	return r.getFlag(flagZ)
+}
+
+func (r *registers) SetFlagN(val bool) {
+	r.setFlag(flagN, val)
+}
+
+func (r *registers) GetFlagN() bool {
+	return r.getFlag(flagN)
+}
+
+func (r *registers) SetFlagH(val bool) {
+	r.setFlag(flagH, val)
+}
+
+func (r *registers) GetFlagH() bool {
+	return r.getFlag(flagH)
+}
+
+func (r *registers) SetFlagC(val bool) {
+	r.setFlag(flagC, val)
+}
+
+func (r *registers) GetFlagC() bool {
+	return r.getFlag(flagC)
 }
 
 func (r *registers) SetTempAddrMsb(v byte) {

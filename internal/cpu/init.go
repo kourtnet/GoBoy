@@ -169,12 +169,15 @@ func (cpu *CPU) init_LD16() {
 	cpu.instructions[0xF9] = []func(){cpu.ld_R16_R16("SP", "HL"), cpu.nop}
 	// LD [n16], SP
 	cpu.instructions[0x08] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_TempAddr_SPL, cpu.ld_TempAddr_SPH, cpu.nop}
+	// LD HL, SP + n8
+	cpu.instructions[0xF8] = []func(){cpu.readPCAddrAndInc, cpu.ld_L_SP_plus_N8, cpu.ld_H_SP_plus_N8}
 
 	cpu.init_LD_R16_N16()
 	cpu.InitPush()
 	cpu.InitPop()
 }
 
+// TODO: rename readAddrLsb, readAddrMsb and readPCAddrAndInc. Smth like readN8, readN16Msb, readN16Lsb
 func (cpu *CPU) init_LD_R16_N16() {
 	cpu.instructions[0x01] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("BC", "TempAddr")}
 	cpu.instructions[0x11] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("DE", "TempAddr")}

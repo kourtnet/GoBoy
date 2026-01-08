@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"errors"
+	"fmt"
 )
 
 func (cpu *CPU) readAddr(addr uint16) {
@@ -281,4 +282,54 @@ func (cpu *CPU) popMsb() {
 	cpu.readAddr(cpu.registers.sp)
 	cpu.registers.SetTempAddrMsb(cpu.registers.Temp)
 	cpu.registers.IncSP()
+}
+
+func (cpu *CPU) hCarry(a, b uint8) {
+	if ((a & 0x0F) + (b & 0x0F)) > 0x0F {
+		cpu.registers.SetFlagH(true)
+		return
+	}
+
+	cpu.registers.SetFlagH(false)
+}
+
+func (cpu *CPU) cCarry(a, b uint8) {
+	if (uint16(a) + uint16(b)) > 0x0FF {
+		cpu.registers.SetFlagC(true)
+		return
+	}
+
+	cpu.registers.SetFlagC(false)
+}
+
+func (cpu *CPU) ld_L_SP_plus_N8() {
+	SPL := cpu.registers.SPL()
+	e := cpu.registers.Temp
+	result := uint16(SPL) + uint16(e)
+	fmt.Println(SPL, e, result, uint8(result))
+
+	cpu.registers.SetFlagZ(false)
+	cpu.registers.SetFlagN(false)
+	cpu.hCarry(SPL, e)
+	cpu.cCarry(SPL, e)
+
+	cpu.registers.L = uint8(result)
+}
+
+func (cpu *CPU) signAdjust(val uint8) uint8 {
+	if (val & 0b10000000) == 0 {
+		return 0x00
+	}
+
+	return 0xFF
+}
+
+func (cpu *CPU) ld_H_SP_plus_N8() {
+	adj := cpu.signAdjust(cpu.registers.Temp)
+	carry := uint8(0)
+	if cpu.registers.GetFlagC() {
+		carry = 1
+	}
+
+	cpu.registers.H = cpu.registers.SPH() + adj + carry
 }
