@@ -158,9 +158,9 @@ func (cpu *CPU) init_LDH() {
 
 // TODO: get rid of temp func
 func (cpu *CPU) init_LD_HL_Inc_Dec() {
-	cpu.instructions[0x22] = []func(){cpu.ld_HL_Addr_A_Inc, cpu.nop}
+	cpu.instructions[0x22] = []func(){cpu.ld_R16_Addr_R8_Inc("HL", 'A'), cpu.nop}
 	cpu.instructions[0x2A] = []func(){cpu.readHLAddrInc, cpu.ld_R8_Temp('A')}
-	cpu.instructions[0x32] = []func(){cpu.ld_HL_Addr_A_Dec, cpu.nop}
+	cpu.instructions[0x32] = []func(){cpu.ld_R16_Addr_R8_Dec("HL", 'A'), cpu.nop}
 	cpu.instructions[0x3A] = []func(){cpu.readHLAddrDec, cpu.ld_R8_Temp('A')}
 }
 
@@ -169,7 +169,9 @@ func (cpu *CPU) init_LD16() {
 	cpu.instructions[0xF9] = []func(){cpu.ld_R16_R16("SP", "HL"), cpu.nop}
 	// LD [n16], SP
 	cpu.instructions[0x08] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_TempAddr_SPL, cpu.ld_TempAddr_SPH, cpu.nop}
+
 	cpu.init_LD_R16_N16()
+	cpu.InitPush()
 }
 
 func (cpu *CPU) init_LD_R16_N16() {
@@ -177,4 +179,11 @@ func (cpu *CPU) init_LD_R16_N16() {
 	cpu.instructions[0x11] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("DE", "TempAddr")}
 	cpu.instructions[0x21] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("HL", "TempAddr")}
 	cpu.instructions[0x31] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("SP", "TempAddr")}
+}
+
+func (cpu *CPU) InitPush() {
+	cpu.instructions[0xC5] = []func(){cpu.decSp, cpu.ld_R16_Addr_R8_Dec("SP", 'B'), cpu.ld_R16_Addr_R8("SP", 'C'), cpu.nop}
+	cpu.instructions[0xD5] = []func(){cpu.decSp, cpu.ld_R16_Addr_R8_Dec("SP", 'D'), cpu.ld_R16_Addr_R8("SP", 'E'), cpu.nop}
+	cpu.instructions[0xE5] = []func(){cpu.decSp, cpu.ld_R16_Addr_R8_Dec("SP", 'H'), cpu.ld_R16_Addr_R8("SP", 'L'), cpu.nop}
+	cpu.instructions[0xF5] = []func(){cpu.decSp, cpu.ld_R16_Addr_R8_Dec("SP", 'A'), cpu.ld_R16_Addr_R8("SP", 'F'), cpu.nop}
 }

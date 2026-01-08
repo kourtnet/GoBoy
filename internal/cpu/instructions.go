@@ -61,6 +61,8 @@ func (cpu *CPU) determine8Reg(rName byte) *byte {
 	switch rName {
 	case 'A':
 		return &cpu.registers.A
+	case 'F':
+		return &cpu.registers.F
 	case 'B':
 		return &cpu.registers.B
 	case 'C':
@@ -119,6 +121,40 @@ func (cpu *CPU) determine16RegSetter(rName string) func(uint16) {
 	default:
 		cpu.internalErr = errors.New("unknown register name " + rName)
 		return func(uint16) {}
+	}
+}
+
+func (cpu *CPU) determine16RegInc(rName string) func() {
+	switch rName {
+	case "BC":
+		return cpu.registers.IncBC
+	case "DE":
+		return cpu.registers.IncDE
+	case "HL":
+		return cpu.registers.IncHL
+	case "SP":
+		return cpu.registers.IncSP
+	case "TempAddr":
+		return cpu.registers.IncTempAddr
+	default:
+		cpu.internalErr = errors.New("unknown register name " + rName)
+		return func() {}
+	}
+}
+
+func (cpu *CPU) determine16RegDec(rName string) func() {
+	switch rName {
+	case "BC":
+		return cpu.registers.DecBC
+	case "DE":
+		return cpu.registers.DecDE
+	case "HL":
+		return cpu.registers.DecHL
+	case "SP":
+		return cpu.registers.DecSP
+	default:
+		cpu.internalErr = errors.New("unknown register name " + rName)
+		return func() {}
 	}
 }
 
@@ -190,16 +226,6 @@ func (cpu *CPU) readHLAddrInc() {
 	cpu.registers.IncHL()
 }
 
-func (cpu *CPU) ld_HL_Addr_A_Dec() {
-	cpu.bus.Write(cpu.registers.HL(), cpu.registers.A)
-	cpu.registers.DecHL()
-}
-
-func (cpu *CPU) ld_HL_Addr_A_Inc() {
-	cpu.bus.Write(cpu.registers.HL(), cpu.registers.A)
-	cpu.registers.IncHL()
-}
-
 func (cpu *CPU) ld_R16_R16(r1Name, r2Name string) func() {
 	r1 := cpu.determine16RegSetter(r1Name)
 	r2 := cpu.determine16Reg(r2Name)
@@ -217,4 +243,30 @@ func (cpu *CPU) ld_TempAddr_SPL() {
 // writing SP value into memory
 func (cpu *CPU) ld_TempAddr_SPH() {
 	cpu.bus.Write(cpu.registers.TempAddr()+1, cpu.registers.SPH())
+}
+
+func (cpu *CPU) decSp() {
+	cpu.registers.DecSP()
+}
+
+func (cpu *CPU) ld_R16_Addr_R8_Dec(r1Name string, r2Name byte) func() {
+	r1 := cpu.determine16Reg(r1Name)
+	r1Dec := cpu.determine16RegDec(r1Name)
+	r2 := cpu.determine8Reg(r2Name)
+
+	return func() {
+		cpu.bus.Write(r1(), *r2)
+		r1Dec()
+	}
+}
+
+func (cpu *CPU) ld_R16_Addr_R8_Inc(r1Name string, r2Name byte) func() {
+	r1 := cpu.determine16Reg(r1Name)
+	r1Inc := cpu.determine16RegInc(r1Name)
+	r2 := cpu.determine8Reg(r2Name)
+
+	return func() {
+		cpu.bus.Write(r1(), *r2)
+		r1Inc()
+	}
 }

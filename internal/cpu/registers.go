@@ -62,6 +62,20 @@ func (r *registers) BC() uint16 {
 	return r.r8R8ToR16(r.B, r.C)
 }
 
+func (r *registers) IncBC() {
+	BC := r.BC()
+	BC++
+
+	r.SetBC(BC)
+}
+
+func (r *registers) DecBC() {
+	BC := r.BC()
+	BC--
+
+	r.SetBC(BC)
+}
+
 func (r *registers) SetBC(val uint16) {
 	r.B = r.r16Msb(val)
 	r.C = r.r16Lsb(val)
@@ -69,6 +83,20 @@ func (r *registers) SetBC(val uint16) {
 
 func (r *registers) DE() uint16 {
 	return r.r8R8ToR16(r.D, r.E)
+}
+
+func (r *registers) IncDE() {
+	DE := r.DE()
+	DE++
+
+	r.SetBC(DE)
+}
+
+func (r *registers) DecDE() {
+	DE := r.DE()
+	DE--
+
+	r.SetBC(DE)
 }
 
 func (r *registers) SetDE(val uint16) {
@@ -85,6 +113,20 @@ func (r *registers) SetHL(val uint16) {
 	r.L = r.r16Lsb(val)
 }
 
+func (r *registers) IncHL() {
+	HL := r.HL()
+	HL++
+
+	r.SetHL(HL)
+}
+
+func (r *registers) DecHL() {
+	HL := r.HL()
+	HL--
+
+	r.SetHL(HL)
+}
+
 func (r *registers) PC() uint16 {
 	return r.pc
 }
@@ -95,6 +137,14 @@ func (r *registers) SP() uint16 {
 
 func (r *registers) SetSP(val uint16) {
 	r.sp = val
+}
+
+func (r *registers) DecSP() {
+	r.sp--
+}
+
+func (r *registers) IncSP() {
+	r.sp++
 }
 
 func (r *registers) SPL() byte {
@@ -109,22 +159,12 @@ func (r *registers) TempAddr() uint16 {
 	return r.tempAddr
 }
 
+func (r *registers) IncTempAddr() {
+	r.tempAddr++
+}
+
 func (r *registers) IncPC() {
 	r.pc++
-}
-
-func (r *registers) IncHL() {
-	HL := r.HL()
-	HL++
-
-	r.SetHL(HL)
-}
-
-func (r *registers) DecHL() {
-	HL := r.HL()
-	HL--
-
-	r.SetHL(HL)
 }
 
 func (r *registers) SetTempAddrMsb(v byte) {
