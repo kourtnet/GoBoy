@@ -32,6 +32,15 @@ func (cpu *CPU) initInstructions() {
 	cpu.init_NOP()
 
 	// ld
+	cpu.init_LD8()
+	cpu.init_LD16()
+}
+
+func (cpu *CPU) init_NOP() {
+	cpu.instructions[0x00] = []func(){cpu.nop}
+}
+
+func (cpu *CPU) init_LD8() {
 	cpu.init_LD_R8_R8()
 	cpu.init_LD_R8_N8()
 	cpu.init_LD_R8_R16_Addr()
@@ -39,11 +48,6 @@ func (cpu *CPU) initInstructions() {
 	cpu.init_LD_N16_Addr()
 	cpu.init_LDH()
 	cpu.init_LD_HL_Inc_Dec()
-	cpu.init_LD_16bit()
-}
-
-func (cpu *CPU) init_NOP() {
-	cpu.instructions[0x00] = []func(){cpu.nop}
 }
 
 func (cpu *CPU) init_LD_R8_R8() {
@@ -160,6 +164,13 @@ func (cpu *CPU) init_LD_HL_Inc_Dec() {
 	cpu.instructions[0x3A] = []func(){cpu.readHLAddrDec, cpu.ld_R8_Temp('A')}
 }
 
-func (cpu *CPU) init_LD_16bit() {
+func (cpu *CPU) init_LD16() {
+	cpu.init_LD_R16_N16()
+}
+
+func (cpu *CPU) init_LD_R16_N16() {
 	cpu.instructions[0x01] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("BC", "TempAddr")}
+	cpu.instructions[0x11] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("DE", "TempAddr")}
+	cpu.instructions[0x21] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("HL", "TempAddr")}
+	cpu.instructions[0x31] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("SP", "TempAddr")}
 }

@@ -16,7 +16,11 @@ type registers struct {
 	sp uint16
 
 	// temporary regs
-	Temp     byte
+	Temp byte
+	// TODO: rename. Now tempAddr is used not only as an adress,
+	// but as a temporal register also. So the name is a bit
+	// confusing. Suggestion: rename temp to temp8 and tempAddr
+	// to temp16
 	tempAddr uint16
 }
 

@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/kourtnet/GoBoy/internal/cpu/mocks"
@@ -192,38 +193,27 @@ func Test_determine16Reg(t *testing.T) {
 	}
 }
 
-func TestLD8(t *testing.T) {
-	ROMPath := "../../testing/roms/ld8.rom"
-	snapPath := "../../testing/snapshots/ld8.snap"
+func TestWithROMFiles(t *testing.T) {
+	filenames := []string{"ld8", "ld16"}
 
-	suite, err := NewTestSuite(ROMPath, snapPath)
-	if err != nil {
-		t.Fatal(err)
-	}
+	ROMPathFormat := "../../testing/roms/%s.rom"
+	snapPathFormat := "../../testing/snapshots/%s.snap"
 
-	t.Run("test LD 8 bit instructions", func(t *testing.T) {
-		for suite.step() {
-			if suite.err != nil {
-				t.Error(suite.err)
-			}
+	for _, name := range filenames {
+		ROMPath := fmt.Sprintf(ROMPathFormat, name)
+		snapPath := fmt.Sprintf(snapPathFormat, name)
+
+		suite, err := NewTestSuite(ROMPath, snapPath)
+		if err != nil {
+			t.Fatal(err)
 		}
-	})
-}
 
-func TestLD16(t *testing.T) {
-	ROMPath := "../../testing/roms/ld16.rom"
-	snapPath := "../../testing/snapshots/ld16.snap"
-
-	suite, err := NewTestSuite(ROMPath, snapPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Run("test LD 16 bit instructions", func(t *testing.T) {
-		for suite.step() {
-			if suite.err != nil {
-				t.Error(suite.err)
+		t.Run(fmt.Sprintf("test %s instructions", name), func(t *testing.T) {
+			for suite.step() {
+				if suite.err != nil {
+					t.Error(suite.err)
+				}
 			}
-		}
-	})
+		})
+	}
 }
