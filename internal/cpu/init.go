@@ -167,7 +167,8 @@ func (cpu *CPU) init_LD_HL_Inc_Dec() {
 func (cpu *CPU) init_LD16() {
 	// LD SP, HL
 	cpu.instructions[0xF9] = []func(){cpu.ld_R16_R16("SP", "HL"), cpu.nop}
-
+	// LD [n16], SP
+	cpu.instructions[0x08] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_TempAddr_SPL, cpu.ld_TempAddr_SPH, cpu.nop}
 	cpu.init_LD_R16_N16()
 }
 

@@ -97,6 +97,14 @@ func (r *registers) SetSP(val uint16) {
 	r.sp = val
 }
 
+func (r *registers) SPL() byte {
+	return r.r16Lsb(r.sp)
+}
+
+func (r *registers) SPH() byte {
+	return r.r16Msb(r.sp)
+}
+
 func (r *registers) TempAddr() uint16 {
 	return r.tempAddr
 }

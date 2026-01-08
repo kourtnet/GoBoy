@@ -207,3 +207,13 @@ func (cpu *CPU) ld_R16_R16(r1Name, r2Name string) func() {
 		r1(r2())
 	}
 }
+
+func (cpu *CPU) ld_TempAddr_SPL() {
+	cpu.bus.Write(cpu.registers.TempAddr(), cpu.registers.SPL())
+}
+
+// +1 in address means this func is used only with ld_TempAddr_SPL for
+// writing SP value into memory
+func (cpu *CPU) ld_TempAddr_SPH() {
+	cpu.bus.Write(cpu.registers.TempAddr()+1, cpu.registers.SPH())
+}
