@@ -28,19 +28,20 @@ func New(bus iBus) (CPU, error) {
 }
 
 func (cpu *CPU) initInstructions() {
-	// nop
-	cpu.init_NOP()
+	cpu.initNOP()
 
 	// ld
-	cpu.init_LD8()
-	cpu.init_LD16()
+	cpu.initLD8()
+	cpu.initLD16()
+
+	cpu.initAdd()
 }
 
-func (cpu *CPU) init_NOP() {
+func (cpu *CPU) initNOP() {
 	cpu.instructions[0x00] = []func(){cpu.nop}
 }
 
-func (cpu *CPU) init_LD8() {
+func (cpu *CPU) initLD8() {
 	cpu.init_LD_R8_R8()
 	cpu.init_LD_R8_N8()
 	cpu.init_LD_R8_R16_Addr()
@@ -164,7 +165,7 @@ func (cpu *CPU) init_LD_HL_Inc_Dec() {
 	cpu.instructions[0x3A] = []func(){cpu.readHLAddrDec, cpu.ld_R8_Temp('A')}
 }
 
-func (cpu *CPU) init_LD16() {
+func (cpu *CPU) initLD16() {
 	// LD SP, HL
 	cpu.instructions[0xF9] = []func(){cpu.ld_R16_R16("SP", "HL"), cpu.nop}
 	// LD [n16], SP
@@ -197,4 +198,18 @@ func (cpu *CPU) InitPop() {
 	cpu.instructions[0xD1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("DE", "TempAddr")}
 	cpu.instructions[0xE1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("HL", "TempAddr")}
 	cpu.instructions[0xF1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("AF", "TempAddr")}
+}
+
+func (cpu *CPU) initAdd() {
+	cpu.init_Add_R8()
+}
+
+func (cpu *CPU) init_Add_R8() {
+	cpu.instructions[0x80] = []func(){cpu.addR8('B')}
+	cpu.instructions[0x81] = []func(){cpu.addR8('C')}
+	cpu.instructions[0x82] = []func(){cpu.addR8('D')}
+	cpu.instructions[0x83] = []func(){cpu.addR8('E')}
+	cpu.instructions[0x84] = []func(){cpu.addR8('H')}
+	cpu.instructions[0x85] = []func(){cpu.addR8('L')}
+	cpu.instructions[0x87] = []func(){cpu.addR8('A')}
 }

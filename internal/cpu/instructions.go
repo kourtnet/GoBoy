@@ -333,3 +333,23 @@ func (cpu *CPU) ld_H_SP_plus_N8() {
 
 	cpu.registers.H = cpu.registers.SPH() + adj + carry
 }
+
+func (cpu *CPU) determineFlags(op1, op2 byte, isSub bool) {
+	cpu.registers.SetFlagZ(op1+op2 == 0)
+	cpu.registers.SetFlagN(isSub)
+	cpu.cCarry(op1, op2)
+	cpu.hCarry(op1, op2)
+}
+
+func (cpu *CPU) addVal(val byte) {
+	cpu.determineFlags(cpu.registers.A, val, false)
+	cpu.registers.A += val
+}
+
+func (cpu *CPU) addR8(rName byte) func() {
+	r := cpu.determine8Reg(rName)
+
+	return func() {
+		cpu.addVal(*r)
+	}
+}
