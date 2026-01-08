@@ -202,6 +202,11 @@ func (cpu *CPU) InitPop() {
 
 func (cpu *CPU) initAdd() {
 	cpu.init_Add_R8()
+
+	// ADD [HL]
+	cpu.instructions[0x86] = []func(){cpu.readR16Addr("HL"), cpu.addR8('T')}
+	// ADD n8
+	cpu.instructions[0xC6] = []func(){cpu.readPCAddrAndInc, cpu.addR8('T')}
 }
 
 func (cpu *CPU) init_Add_R8() {
