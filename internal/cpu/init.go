@@ -41,6 +41,8 @@ func (cpu *CPU) initInstructions() {
 	cpu.initINC()
 	cpu.initDEC()
 	cpu.initAND()
+	cpu.initOR()
+	cpu.initXOR()
 }
 
 func (cpu *CPU) initNOP() {
@@ -344,4 +346,42 @@ func (cpu *CPU) init_AND_R8() {
 	cpu.instructions[0xA4] = []func(){cpu.andR8('H')}
 	cpu.instructions[0xA5] = []func(){cpu.andR8('L')}
 	cpu.instructions[0xA7] = []func(){cpu.andR8('A')}
+}
+
+func (cpu *CPU) initOR() {
+	// OR [HL]
+	cpu.instructions[0xB6] = []func(){cpu.readR16Addr("HL"), cpu.orR8('T')}
+	// OR n8
+	cpu.instructions[0xF6] = []func(){cpu.readPCAddrAndInc, cpu.orR8('T')}
+
+	cpu.init_OR_R8()
+}
+
+func (cpu *CPU) init_OR_R8() {
+	cpu.instructions[0xB0] = []func(){cpu.orR8('B')}
+	cpu.instructions[0xB1] = []func(){cpu.orR8('C')}
+	cpu.instructions[0xB2] = []func(){cpu.orR8('D')}
+	cpu.instructions[0xB3] = []func(){cpu.orR8('E')}
+	cpu.instructions[0xB4] = []func(){cpu.orR8('H')}
+	cpu.instructions[0xB5] = []func(){cpu.orR8('L')}
+	cpu.instructions[0xB7] = []func(){cpu.orR8('A')}
+}
+
+func (cpu *CPU) initXOR() {
+	// OR [HL]
+	cpu.instructions[0xAE] = []func(){cpu.readR16Addr("HL"), cpu.xorR8('T')}
+	// OR n8
+	cpu.instructions[0xEE] = []func(){cpu.readPCAddrAndInc, cpu.xorR8('T')}
+
+	cpu.init_XOR_R8()
+}
+
+func (cpu *CPU) init_XOR_R8() {
+	cpu.instructions[0xA8] = []func(){cpu.xorR8('B')}
+	cpu.instructions[0xA9] = []func(){cpu.xorR8('C')}
+	cpu.instructions[0xAA] = []func(){cpu.xorR8('D')}
+	cpu.instructions[0xAB] = []func(){cpu.xorR8('E')}
+	cpu.instructions[0xAC] = []func(){cpu.xorR8('H')}
+	cpu.instructions[0xAD] = []func(){cpu.xorR8('L')}
+	cpu.instructions[0xAF] = []func(){cpu.xorR8('A')}
 }
