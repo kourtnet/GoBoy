@@ -40,6 +40,7 @@ func (cpu *CPU) initInstructions() {
 	cpu.initCP()
 	cpu.initINC()
 	cpu.initDEC()
+	cpu.initAND()
 }
 
 func (cpu *CPU) initNOP() {
@@ -324,4 +325,23 @@ func (cpu *CPU) init_DEC_R8() {
 	cpu.instructions[0x1D] = []func(){cpu.decR8('E')}
 	cpu.instructions[0x2D] = []func(){cpu.decR8('L')}
 	cpu.instructions[0x3D] = []func(){cpu.decR8('A')}
+}
+
+func (cpu *CPU) initAND() {
+	// AND [HL]
+	cpu.instructions[0xA6] = []func(){cpu.readR16Addr("HL"), cpu.andR8('T')}
+	// AND n8
+	cpu.instructions[0xE6] = []func(){cpu.readPCAddrAndInc, cpu.andR8('T')}
+
+	cpu.init_AND_R8()
+}
+
+func (cpu *CPU) init_AND_R8() {
+	cpu.instructions[0xA0] = []func(){cpu.andR8('B')}
+	cpu.instructions[0xA1] = []func(){cpu.andR8('C')}
+	cpu.instructions[0xA2] = []func(){cpu.andR8('D')}
+	cpu.instructions[0xA3] = []func(){cpu.andR8('E')}
+	cpu.instructions[0xA4] = []func(){cpu.andR8('H')}
+	cpu.instructions[0xA5] = []func(){cpu.andR8('L')}
+	cpu.instructions[0xA7] = []func(){cpu.andR8('A')}
 }

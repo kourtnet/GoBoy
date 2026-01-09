@@ -485,3 +485,16 @@ func (cpu *CPU) ldHLAddrTempDEC() {
 	cpu.decR8('T')()
 	cpu.ldHLAddrTemp()
 }
+
+func (cpu *CPU) andR8(rName byte) func() {
+	r := cpu.determine8Reg(rName)
+
+	return func() {
+		cpu.registers.A &= *r
+
+		cpu.determineFlagZ(cpu.registers.A)
+		cpu.registers.SetFlagN(false)
+		cpu.registers.SetFlagH(true)
+		cpu.registers.SetFlagC(false)
+	}
+}
