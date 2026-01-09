@@ -34,8 +34,10 @@ func (cpu *CPU) initInstructions() {
 	cpu.initLD8()
 	cpu.initLD16()
 
+	// arithmetic
 	cpu.init_ADD_ADC()
 	cpu.init_SUB_SBC()
+	cpu.initCP()
 }
 
 func (cpu *CPU) initNOP() {
@@ -267,4 +269,23 @@ func (cpu *CPU) init_SBC_R8() {
 	cpu.instructions[0x9c] = []func(){cpu.sbcR8('H')}
 	cpu.instructions[0x9d] = []func(){cpu.sbcR8('L')}
 	cpu.instructions[0x9F] = []func(){cpu.sbcR8('A')}
+}
+
+func (cpu *CPU) initCP() {
+	// CP [HL]
+	cpu.instructions[0xBE] = []func(){cpu.readR16Addr("HL"), cpu.cpR8('T')}
+	// CP n8
+	cpu.instructions[0xFE] = []func(){cpu.readPCAddrAndInc, cpu.cpR8('T')}
+
+	cpu.init_CP_R8()
+}
+
+func (cpu *CPU) init_CP_R8() {
+	cpu.instructions[0xB8] = []func(){cpu.cpR8('B')}
+	cpu.instructions[0xB9] = []func(){cpu.cpR8('C')}
+	cpu.instructions[0xBa] = []func(){cpu.cpR8('D')}
+	cpu.instructions[0xBb] = []func(){cpu.cpR8('E')}
+	cpu.instructions[0xBc] = []func(){cpu.cpR8('H')}
+	cpu.instructions[0xBd] = []func(){cpu.cpR8('L')}
+	cpu.instructions[0xBF] = []func(){cpu.cpR8('A')}
 }

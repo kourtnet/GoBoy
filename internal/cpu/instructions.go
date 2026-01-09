@@ -439,3 +439,13 @@ func (cpu *CPU) sbcR8(rName byte) func() {
 		cpu.subVal(*r, cpu.registers.GetFlagC())
 	}
 }
+
+func (cpu *CPU) cpR8(rName byte) func() {
+	r := cpu.determine8Reg(rName)
+
+	return func() {
+		A := cpu.registers.A
+		cpu.subVal(*r, false)
+		cpu.registers.A = A
+	}
+}
