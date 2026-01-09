@@ -284,8 +284,24 @@ func (cpu *CPU) popMsb() {
 	cpu.registers.IncSP()
 }
 
-func (cpu *CPU) hCarry(a, b uint8) {
-	if ((a & 0x0F) + (b & 0x0F)) > 0x0F {
+func (cpu *CPU) determineFlagH(a, b uint8, isSub, carry bool) {
+	a &= 0x0F
+	b &= 0x0F
+
+	var res byte
+	if isSub {
+		res = a - b
+		if carry {
+			res--
+		}
+	} else {
+		res = a + b
+		if carry {
+			res++
+		}
+	}
+
+	if res > 0x0F {
 		cpu.registers.SetFlagH(true)
 		return
 	}
@@ -293,8 +309,24 @@ func (cpu *CPU) hCarry(a, b uint8) {
 	cpu.registers.SetFlagH(false)
 }
 
-func (cpu *CPU) cCarry(a, b uint8) {
-	if (uint16(a) + uint16(b)) > 0x0FF {
+func (cpu *CPU) determineFlagC(a, b uint8, isSub, carry bool) {
+	a16 := uint16(a)
+	b16 := uint16(b)
+
+	var res uint16
+	if isSub {
+		res = a16 - b16
+		if carry {
+			res--
+		}
+	} else {
+		res = a16 + b16
+		if carry {
+			res++
+		}
+	}
+
+	if res > 0x0FF {
 		cpu.registers.SetFlagC(true)
 		return
 	}
@@ -310,8 +342,8 @@ func (cpu *CPU) ld_L_SP_plus_N8() {
 
 	cpu.registers.SetFlagZ(false)
 	cpu.registers.SetFlagN(false)
-	cpu.hCarry(SPL, e)
-	cpu.cCarry(SPL, e)
+	cpu.determineFlagH(SPL, e, false, false)
+	cpu.determineFlagC(SPL, e, false, false)
 
 	cpu.registers.L = uint8(result)
 }
@@ -334,15 +366,32 @@ func (cpu *CPU) ld_H_SP_plus_N8() {
 	cpu.registers.H = cpu.registers.SPH() + adj + carry
 }
 
-func (cpu *CPU) determineFlags(op1, op2 byte, isSub bool) {
-	cpu.registers.SetFlagZ(op1+op2 == 0)
+func (cpu *CPU) determineFlagZ(val byte) {
+	cpu.registers.SetFlagZ(val == 0)
+}
+
+func (cpu *CPU) determineFlags(op1, op2 byte, isSub, carry bool) {
+	var res byte
+	if isSub {
+		res = op1 - op2
+		if carry {
+			res--
+		}
+	} else {
+		res = op1 + op2
+		if carry {
+			res++
+		}
+	}
+
+	cpu.determineFlagZ(res)
 	cpu.registers.SetFlagN(isSub)
-	cpu.cCarry(op1, op2)
-	cpu.hCarry(op1, op2)
+	cpu.determineFlagH(op1, op2, isSub, carry)
+	cpu.determineFlagC(op1, op2, isSub, carry)
 }
 
 func (cpu *CPU) addVal(val byte) {
-	cpu.determineFlags(cpu.registers.A, val, false)
+	cpu.determineFlags(cpu.registers.A, val, false, false)
 	cpu.registers.A += val
 }
 
