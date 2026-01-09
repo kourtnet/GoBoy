@@ -38,6 +38,8 @@ func (cpu *CPU) initInstructions() {
 	cpu.init_ADD_ADC()
 	cpu.init_SUB_SBC()
 	cpu.initCP()
+	cpu.initINC()
+	cpu.initDEC()
 }
 
 func (cpu *CPU) initNOP() {
@@ -288,4 +290,38 @@ func (cpu *CPU) init_CP_R8() {
 	cpu.instructions[0xBc] = []func(){cpu.cpR8('H')}
 	cpu.instructions[0xBd] = []func(){cpu.cpR8('L')}
 	cpu.instructions[0xBF] = []func(){cpu.cpR8('A')}
+}
+
+func (cpu *CPU) initINC() {
+	// INC [HL]
+	cpu.instructions[0x34] = []func(){cpu.readR16Addr("HL"), cpu.ldHLAddrTempINC, cpu.nop}
+
+	cpu.init_INC_R8()
+}
+
+func (cpu *CPU) init_INC_R8() {
+	cpu.instructions[0x04] = []func(){cpu.incR8('B')}
+	cpu.instructions[0x14] = []func(){cpu.incR8('D')}
+	cpu.instructions[0x24] = []func(){cpu.incR8('H')}
+	cpu.instructions[0x0C] = []func(){cpu.incR8('C')}
+	cpu.instructions[0x1C] = []func(){cpu.incR8('E')}
+	cpu.instructions[0x2C] = []func(){cpu.incR8('L')}
+	cpu.instructions[0x3C] = []func(){cpu.incR8('A')}
+}
+
+func (cpu *CPU) initDEC() {
+	// DEC [HL]
+	cpu.instructions[0x35] = []func(){cpu.readR16Addr("HL"), cpu.ldHLAddrTempDEC, cpu.nop}
+
+	cpu.init_DEC_R8()
+}
+
+func (cpu *CPU) init_DEC_R8() {
+	cpu.instructions[0x05] = []func(){cpu.decR8('B')}
+	cpu.instructions[0x15] = []func(){cpu.decR8('D')}
+	cpu.instructions[0x25] = []func(){cpu.decR8('H')}
+	cpu.instructions[0x0D] = []func(){cpu.decR8('C')}
+	cpu.instructions[0x1D] = []func(){cpu.decR8('E')}
+	cpu.instructions[0x2D] = []func(){cpu.decR8('L')}
+	cpu.instructions[0x3D] = []func(){cpu.decR8('A')}
 }

@@ -449,3 +449,39 @@ func (cpu *CPU) cpR8(rName byte) func() {
 		cpu.registers.A = A
 	}
 }
+
+func (cpu *CPU) incR8(rName byte) func() {
+	r := cpu.determine8Reg(rName)
+
+	return func() {
+		cpu.determineFlagH(*r, 1, false, false)
+		cpu.registers.SetFlagN(false)
+
+		*r++
+		cpu.determineFlagZ(*r)
+	}
+}
+
+// really goofy name, but it's just a second
+// operation of INC [HL] instruction
+func (cpu *CPU) ldHLAddrTempINC() {
+	cpu.incR8('T')()
+	cpu.ldHLAddrTemp()
+}
+
+func (cpu *CPU) decR8(rName byte) func() {
+	r := cpu.determine8Reg(rName)
+
+	return func() {
+		cpu.determineFlagH(*r, 1, true, false)
+		cpu.registers.SetFlagN(true)
+
+		*r--
+		cpu.determineFlagZ(*r)
+	}
+}
+
+func (cpu *CPU) ldHLAddrTempDEC() {
+	cpu.decR8('T')()
+	cpu.ldHLAddrTemp()
+}
