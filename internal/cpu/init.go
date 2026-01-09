@@ -201,15 +201,20 @@ func (cpu *CPU) InitPop() {
 }
 
 func (cpu *CPU) initAdd() {
-	cpu.init_Add_R8()
-
 	// ADD [HL]
 	cpu.instructions[0x86] = []func(){cpu.readR16Addr("HL"), cpu.addR8('T')}
 	// ADD n8
 	cpu.instructions[0xC6] = []func(){cpu.readPCAddrAndInc, cpu.addR8('T')}
+	// ADC [HL]
+	cpu.instructions[0x8E] = []func(){cpu.readR16Addr("HL"), cpu.adcR8('T')}
+	// ADC n8
+	cpu.instructions[0xCE] = []func(){cpu.readPCAddrAndInc, cpu.adcR8('T')}
+
+	cpu.init_ADD_R8()
+	cpu.init_ADC_R8()
 }
 
-func (cpu *CPU) init_Add_R8() {
+func (cpu *CPU) init_ADD_R8() {
 	cpu.instructions[0x80] = []func(){cpu.addR8('B')}
 	cpu.instructions[0x81] = []func(){cpu.addR8('C')}
 	cpu.instructions[0x82] = []func(){cpu.addR8('D')}
@@ -217,4 +222,14 @@ func (cpu *CPU) init_Add_R8() {
 	cpu.instructions[0x84] = []func(){cpu.addR8('H')}
 	cpu.instructions[0x85] = []func(){cpu.addR8('L')}
 	cpu.instructions[0x87] = []func(){cpu.addR8('A')}
+}
+
+func (cpu *CPU) init_ADC_R8() {
+	cpu.instructions[0x88] = []func(){cpu.adcR8('B')}
+	cpu.instructions[0x89] = []func(){cpu.adcR8('C')}
+	cpu.instructions[0x8A] = []func(){cpu.adcR8('D')}
+	cpu.instructions[0x8B] = []func(){cpu.adcR8('E')}
+	cpu.instructions[0x8C] = []func(){cpu.adcR8('H')}
+	cpu.instructions[0x8D] = []func(){cpu.adcR8('L')}
+	cpu.instructions[0x8F] = []func(){cpu.adcR8('A')}
 }

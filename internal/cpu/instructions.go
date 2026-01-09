@@ -390,15 +390,27 @@ func (cpu *CPU) determineFlags(op1, op2 byte, isSub, carry bool) {
 	cpu.determineFlagC(op1, op2, isSub, carry)
 }
 
-func (cpu *CPU) addVal(val byte) {
-	cpu.determineFlags(cpu.registers.A, val, false, false)
+func (cpu *CPU) addVal(val byte, carry bool) {
+	cpu.determineFlags(cpu.registers.A, val, false, carry)
+
 	cpu.registers.A += val
+	if carry {
+		cpu.registers.A++
+	}
 }
 
 func (cpu *CPU) addR8(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		cpu.addVal(*r)
+		cpu.addVal(*r, false)
+	}
+}
+
+func (cpu *CPU) adcR8(rName byte) func() {
+	r := cpu.determine8Reg(rName)
+
+	return func() {
+		cpu.addVal(*r, cpu.registers.GetFlagC())
 	}
 }

@@ -194,7 +194,7 @@ func Test_determine16Reg(t *testing.T) {
 }
 
 func TestWithROMFiles(t *testing.T) {
-	filenames := []string{"ld8", "ld16", "add8"}
+	filenames := []string{"ld8", "ld16", "add8", "adc8"}
 
 	ROMPathFormat := "../../testing/roms/%s.rom"
 	snapPathFormat := "../../testing/snapshots/%s.snap"
