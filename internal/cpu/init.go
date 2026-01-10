@@ -32,7 +32,7 @@ func (cpu *CPU) initInstructions() {
 	cpu.initLD8()
 	cpu.initLD16()
 
-	cpu.init8BitArithmetic()
+	cpu.initArithmeticAndLogic()
 }
 
 func (cpu *CPU) initNOP() {
@@ -198,7 +198,7 @@ func (cpu *CPU) InitPop() {
 	cpu.instructions[0xF1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("AF", "TempAddr")}
 }
 
-func (cpu *CPU) init8BitArithmetic() {
+func (cpu *CPU) initArithmeticAndLogic() {
 	// CCF
 	cpu.instructions[0x3F] = []func(){cpu.ccf}
 	// SCF
@@ -310,6 +310,7 @@ func (cpu *CPU) initINC() {
 	cpu.instructions[0x34] = []func(){cpu.readR16Addr("HL"), cpu.ldHLAddrTempINC, cpu.nop}
 
 	cpu.init_INC_R8()
+	cpu.init_INC_R16()
 }
 
 func (cpu *CPU) init_INC_R8() {
@@ -322,11 +323,19 @@ func (cpu *CPU) init_INC_R8() {
 	cpu.instructions[0x3C] = []func(){cpu.incR8('A')}
 }
 
+func (cpu *CPU) init_INC_R16() {
+	cpu.instructions[0x03] = []func(){cpu.determine16RegInc("BC"), cpu.nop}
+	cpu.instructions[0x13] = []func(){cpu.determine16RegInc("DE"), cpu.nop}
+	cpu.instructions[0x23] = []func(){cpu.determine16RegInc("HL"), cpu.nop}
+	cpu.instructions[0x33] = []func(){cpu.determine16RegInc("SP"), cpu.nop}
+}
+
 func (cpu *CPU) initDEC() {
 	// DEC [HL]
 	cpu.instructions[0x35] = []func(){cpu.readR16Addr("HL"), cpu.ldHLAddrTempDEC, cpu.nop}
 
 	cpu.init_DEC_R8()
+	cpu.init_DEC_R16()
 }
 
 func (cpu *CPU) init_DEC_R8() {
@@ -337,6 +346,13 @@ func (cpu *CPU) init_DEC_R8() {
 	cpu.instructions[0x1D] = []func(){cpu.decR8('E')}
 	cpu.instructions[0x2D] = []func(){cpu.decR8('L')}
 	cpu.instructions[0x3D] = []func(){cpu.decR8('A')}
+}
+
+func (cpu *CPU) init_DEC_R16() {
+	cpu.instructions[0x0B] = []func(){cpu.determine16RegDec("BC"), cpu.nop}
+	cpu.instructions[0x1B] = []func(){cpu.determine16RegDec("DE"), cpu.nop}
+	cpu.instructions[0x2B] = []func(){cpu.determine16RegDec("HL"), cpu.nop}
+	cpu.instructions[0x3B] = []func(){cpu.determine16RegDec("SP"), cpu.nop}
 }
 
 func (cpu *CPU) initAND() {
