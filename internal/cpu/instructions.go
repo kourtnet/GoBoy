@@ -536,3 +536,39 @@ func (cpu *CPU) scf() {
 	cpu.registers.SetFlagH(false)
 	cpu.registers.SetFlagC(true)
 }
+
+func (cpu *CPU) daa() {
+	var offset uint8
+
+	if cpu.registers.GetFlagN() {
+		if cpu.registers.GetFlagH() {
+			offset += 0x06
+		}
+		if cpu.registers.GetFlagC() {
+			offset += 0x60
+		}
+
+		cpu.registers.A -= offset
+	} else {
+		A := cpu.registers.A
+		if cpu.registers.GetFlagH() || (A&0x0F) > 0x9 {
+			offset += 0x06
+		}
+		if cpu.registers.GetFlagC() || A > 0x99 {
+			offset += 0x60
+			cpu.registers.SetFlagC(true)
+		}
+
+		cpu.registers.A += offset
+	}
+
+	cpu.registers.SetFlagH(false)
+	cpu.determineFlagZ(cpu.registers.A)
+}
+
+func (cpu *CPU) cpl() {
+	cpu.registers.A = ^cpu.registers.A
+
+	cpu.registers.SetFlagN(true)
+	cpu.registers.SetFlagH(true)
+}

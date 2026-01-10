@@ -203,6 +203,10 @@ func (cpu *CPU) init8BitArithmetic() {
 	cpu.instructions[0x3F] = []func(){cpu.ccf}
 	// SCF
 	cpu.instructions[0x37] = []func(){cpu.scf}
+	// DAA
+	cpu.instructions[0x27] = []func(){cpu.daa}
+	// CPL
+	cpu.instructions[0x2F] = []func(){cpu.cpl}
 
 	cpu.init_ADD_ADC()
 	cpu.init_SUB_SBC()
