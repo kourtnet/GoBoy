@@ -524,3 +524,15 @@ func (cpu *CPU) xorR8(rName byte) func() {
 		cpu.registers.SetFlagC(false)
 	}
 }
+
+func (cpu *CPU) ccf() {
+	cpu.registers.SetFlagN(false)
+	cpu.registers.SetFlagH(false)
+	cpu.registers.SetFlagC(!cpu.registers.GetFlagC())
+}
+
+func (cpu *CPU) scf() {
+	cpu.registers.SetFlagN(false)
+	cpu.registers.SetFlagH(false)
+	cpu.registers.SetFlagC(true)
+}

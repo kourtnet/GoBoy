@@ -23,26 +23,16 @@ func New(bus iBus) (CPU, error) {
 
 	// Required for initial cpu step, basically a NOP
 	cpu.currInstructionLen = len(cpu.instructions[cpu.registers.IR])
-
 	return cpu, nil
 }
 
 func (cpu *CPU) initInstructions() {
 	cpu.initNOP()
 
-	// ld
 	cpu.initLD8()
 	cpu.initLD16()
 
-	// arithmetic
-	cpu.init_ADD_ADC()
-	cpu.init_SUB_SBC()
-	cpu.initCP()
-	cpu.initINC()
-	cpu.initDEC()
-	cpu.initAND()
-	cpu.initOR()
-	cpu.initXOR()
+	cpu.init8BitArithmetic()
 }
 
 func (cpu *CPU) initNOP() {
@@ -206,6 +196,22 @@ func (cpu *CPU) InitPop() {
 	cpu.instructions[0xD1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("DE", "TempAddr")}
 	cpu.instructions[0xE1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("HL", "TempAddr")}
 	cpu.instructions[0xF1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("AF", "TempAddr")}
+}
+
+func (cpu *CPU) init8BitArithmetic() {
+	// CCF
+	cpu.instructions[0x3F] = []func(){cpu.ccf}
+	// SCF
+	cpu.instructions[0x37] = []func(){cpu.scf}
+
+	cpu.init_ADD_ADC()
+	cpu.init_SUB_SBC()
+	cpu.initCP()
+	cpu.initINC()
+	cpu.initDEC()
+	cpu.initAND()
+	cpu.initOR()
+	cpu.initXOR()
 }
 
 func (cpu *CPU) init_ADD_ADC() {
