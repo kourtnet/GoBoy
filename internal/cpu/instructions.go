@@ -572,3 +572,52 @@ func (cpu *CPU) cpl() {
 	cpu.registers.SetFlagN(true)
 	cpu.registers.SetFlagH(true)
 }
+
+func (cpu *CPU) add_R16_L(rName byte) func() {
+	r := cpu.determine8Reg(rName)
+
+	return func() {
+		cpu.registers.SetFlagN(false)
+		cpu.determineFlagH(cpu.registers.L, *r, false, false)
+		cpu.determineFlagC(cpu.registers.L, *r, false, false)
+
+		cpu.registers.L += *r
+	}
+}
+
+func (cpu *CPU) add_R16_H(rName byte) func() {
+	r := cpu.determine8Reg(rName)
+
+	return func() {
+		carry := byte(0)
+		if cpu.registers.GetFlagC() {
+			carry = 1
+		}
+
+		cpu.registers.SetFlagN(false)
+		cpu.determineFlagH(cpu.registers.H, *r, false, cpu.registers.GetFlagC())
+		cpu.determineFlagC(cpu.registers.H, *r, false, cpu.registers.GetFlagC())
+
+		cpu.registers.L += *r + carry
+	}
+}
+
+// TODO: maybe rename all those strange names (like ld_H_SP_plus_N8 also)
+// to smth like addSPN8Cycle1 addSPN8Cycle2 e.t.c (or step)
+func (cpu *CPU) splPlusN8() {
+	cpu.registers.SetFlagZ(false)
+	cpu.registers.SetFlagN(false)
+	cpu.determineFlagH(cpu.registers.SPL(), cpu.registers.Temp, false, false)
+	cpu.determineFlagC(cpu.registers.SPL(), cpu.registers.Temp, false, false)
+
+	cpu.registers.SetTempAddrLsb(cpu.registers.SPL() + cpu.registers.Temp)
+}
+
+func (cpu *CPU) sphPlusN8() {
+	res := cpu.registers.SPH() + cpu.signAdjust(cpu.registers.Temp)
+	if cpu.registers.GetFlagC() {
+		res++
+	}
+
+	cpu.registers.SetTempAddrMsb(res)
+}

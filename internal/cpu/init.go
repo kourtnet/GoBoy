@@ -227,8 +227,11 @@ func (cpu *CPU) init_ADD_ADC() {
 	cpu.instructions[0x8E] = []func(){cpu.readR16Addr("HL"), cpu.adcR8('T')}
 	// ADC n8
 	cpu.instructions[0xCE] = []func(){cpu.readPCAddrAndInc, cpu.adcR8('T')}
+	// ADD SP, n8
+	cpu.instructions[0xE8] = []func(){cpu.readPCAddrAndInc, cpu.splPlusN8, cpu.sphPlusN8, cpu.ld_R16_R16("SP", "TempAddr")}
 
 	cpu.init_ADD_R8()
+	cpu.init_ADD_R16()
 	cpu.init_ADC_R8()
 }
 
@@ -240,6 +243,13 @@ func (cpu *CPU) init_ADD_R8() {
 	cpu.instructions[0x84] = []func(){cpu.addR8('H')}
 	cpu.instructions[0x85] = []func(){cpu.addR8('L')}
 	cpu.instructions[0x87] = []func(){cpu.addR8('A')}
+}
+
+func (cpu *CPU) init_ADD_R16() {
+	cpu.instructions[0x09] = []func(){cpu.add_R16_L('C'), cpu.add_R16_H('B')}
+	cpu.instructions[0x19] = []func(){cpu.add_R16_L('E'), cpu.add_R16_H('D')}
+	cpu.instructions[0x29] = []func(){cpu.add_R16_L('L'), cpu.add_R16_H('H')}
+	cpu.instructions[0x39] = []func(){cpu.add_R16_L('P'), cpu.add_R16_H('S')}
 }
 
 func (cpu *CPU) init_ADC_R8() {
