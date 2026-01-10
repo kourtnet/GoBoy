@@ -196,7 +196,8 @@ func Test_determine16Reg(t *testing.T) {
 func TestWithROMFiles(t *testing.T) {
 	filenames := []string{
 		"ld8", "ld16", "add8", "adc8", "sub8", "sbc8",
-		"cp8", "inc8", "dec8", "and8",
+		"cp8", "inc8", "dec8", "and8", "or8", "xor8",
+		"ccf_scf_cpl", "daa",
 	}
 
 	ROMPathFormat := "../../testing/roms/%s.rom"
