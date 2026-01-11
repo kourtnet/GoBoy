@@ -52,7 +52,7 @@ func (cpu *CPU) execute() {
 // TODO: integration test
 func (cpu *CPU) Step() (bool, error) {
 	cpu.step++
-	fmt.Printf("Step %d:\n", cpu.step)
+	// fmt.Printf("Step %d:\n", cpu.step)
 	cpu.execute()
 	if cpu.internalErr != nil {
 		return true, cpu.internalErr
@@ -66,9 +66,9 @@ func (cpu *CPU) Step() (bool, error) {
 	}
 
 	// TODO: write a debugger instead of this
-	fmt.Printf("Regs:\n%s\n", cpu.registers)
-	fmt.Println("16-bit regs:")
-	fmt.Printf("AF: %#x BC: %#x DE: %#x HL: %#x\n", cpu.registers.AF(), cpu.registers.BC(), cpu.registers.DE(), cpu.registers.HL())
+	//	fmt.Printf("Regs:\n%s\n", cpu.registers)
+	//	fmt.Println("16-bit regs:")
+	//	fmt.Printf("AF: %#x BC: %#x DE: %#x HL: %#x\n", cpu.registers.AF(), cpu.registers.BC(), cpu.registers.DE(), cpu.registers.HL())
 
 	return false, nil
 }

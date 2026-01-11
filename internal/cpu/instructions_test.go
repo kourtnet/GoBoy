@@ -175,7 +175,8 @@ func Test_determine16Reg(t *testing.T) {
 	cpu.registers.H = 0x77
 	cpu.registers.L = 0x88
 	cpu.registers.pc = 0x9999
-	cpu.registers.sp = 0xAAAA
+	cpu.registers.S = 0xAA
+	cpu.registers.P = 0xAA
 
 	for _, c := range cases {
 		t.Run(string(c.name)+" register", func(t *testing.T) {
@@ -197,7 +198,7 @@ func TestWithROMFiles(t *testing.T) {
 	filenames := []string{
 		"ld8", "ld16", "add8", "adc8", "sub8", "sbc8",
 		"cp8", "inc8", "dec8", "and8", "or8", "xor8",
-		"ccf_scf_cpl", "daa",
+		"ccf_scf_cpl", "daa", "inc_dec16", "add16",
 	}
 
 	ROMPathFormat := "../../testing/roms/%s.rom"

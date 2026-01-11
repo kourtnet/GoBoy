@@ -2,7 +2,6 @@ package cpu
 
 import (
 	"errors"
-	"fmt"
 )
 
 func (cpu *CPU) readAddr(addr uint16) {
@@ -76,6 +75,10 @@ func (cpu *CPU) determine8Reg(rName byte) *byte {
 		return &cpu.registers.H
 	case 'L':
 		return &cpu.registers.L
+	case 'S':
+		return &cpu.registers.S
+	case 'P':
+		return &cpu.registers.P
 	// Special processing for easier memory reading with immediate addr
 	case 'T':
 		return &cpu.registers.Temp
@@ -237,13 +240,13 @@ func (cpu *CPU) ld_R16_R16(r1Name, r2Name string) func() {
 }
 
 func (cpu *CPU) ld_TempAddr_SPL() {
-	cpu.bus.Write(cpu.registers.TempAddr(), cpu.registers.SPL())
+	cpu.bus.Write(cpu.registers.TempAddr(), cpu.registers.P)
 }
 
 // +1 in address means this func is used only with ld_TempAddr_SPL for
 // writing SP value into memory
 func (cpu *CPU) ld_TempAddr_SPH() {
-	cpu.bus.Write(cpu.registers.TempAddr()+1, cpu.registers.SPH())
+	cpu.bus.Write(cpu.registers.TempAddr()+1, cpu.registers.S)
 }
 
 func (cpu *CPU) decSp() {
@@ -273,13 +276,13 @@ func (cpu *CPU) ld_R16_Addr_R8_Inc(r1Name string, r2Name byte) func() {
 }
 
 func (cpu *CPU) popLsb() {
-	cpu.readAddr(cpu.registers.sp)
+	cpu.readAddr(cpu.registers.SP())
 	cpu.registers.SetTempAddrLsb(cpu.registers.Temp)
 	cpu.registers.IncSP()
 }
 
 func (cpu *CPU) popMsb() {
-	cpu.readAddr(cpu.registers.sp)
+	cpu.readAddr(cpu.registers.SP())
 	cpu.registers.SetTempAddrMsb(cpu.registers.Temp)
 	cpu.registers.IncSP()
 }
@@ -335,10 +338,9 @@ func (cpu *CPU) determineFlagC(a, b uint8, isSub, carry bool) {
 }
 
 func (cpu *CPU) ld_L_SP_plus_N8() {
-	SPL := cpu.registers.SPL()
+	SPL := cpu.registers.P
 	e := cpu.registers.Temp
 	result := uint16(SPL) + uint16(e)
-	fmt.Println(SPL, e, result, uint8(result))
 
 	cpu.registers.SetFlagZ(false)
 	cpu.registers.SetFlagN(false)
@@ -363,7 +365,7 @@ func (cpu *CPU) ld_H_SP_plus_N8() {
 		carry = 1
 	}
 
-	cpu.registers.H = cpu.registers.SPH() + adj + carry
+	cpu.registers.H = cpu.registers.S + adj + carry
 }
 
 func (cpu *CPU) determineFlagZ(val byte) {
@@ -598,7 +600,7 @@ func (cpu *CPU) add_R16_H(rName byte) func() {
 		cpu.determineFlagH(cpu.registers.H, *r, false, cpu.registers.GetFlagC())
 		cpu.determineFlagC(cpu.registers.H, *r, false, cpu.registers.GetFlagC())
 
-		cpu.registers.L += *r + carry
+		cpu.registers.H += *r + carry
 	}
 }
 
@@ -607,14 +609,14 @@ func (cpu *CPU) add_R16_H(rName byte) func() {
 func (cpu *CPU) splPlusN8() {
 	cpu.registers.SetFlagZ(false)
 	cpu.registers.SetFlagN(false)
-	cpu.determineFlagH(cpu.registers.SPL(), cpu.registers.Temp, false, false)
-	cpu.determineFlagC(cpu.registers.SPL(), cpu.registers.Temp, false, false)
+	cpu.determineFlagH(cpu.registers.P, cpu.registers.Temp, false, false)
+	cpu.determineFlagC(cpu.registers.P, cpu.registers.Temp, false, false)
 
-	cpu.registers.SetTempAddrLsb(cpu.registers.SPL() + cpu.registers.Temp)
+	cpu.registers.SetTempAddrLsb(cpu.registers.P + cpu.registers.Temp)
 }
 
 func (cpu *CPU) sphPlusN8() {
-	res := cpu.registers.SPH() + cpu.signAdjust(cpu.registers.Temp)
+	res := cpu.registers.S + cpu.signAdjust(cpu.registers.Temp)
 	if cpu.registers.GetFlagC() {
 		res++
 	}

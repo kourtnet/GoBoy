@@ -66,7 +66,7 @@ type snapshot struct {
 }
 
 func newSnapshot(A, F, B, C, D, E, H, L byte, PC, SP uint16, memory []byte) snapshot {
-	return snapshot{
+	snap := snapshot{
 		regs: registers{
 			A:  A,
 			F:  F,
@@ -77,10 +77,12 @@ func newSnapshot(A, F, B, C, D, E, H, L byte, PC, SP uint16, memory []byte) snap
 			H:  H,
 			L:  L,
 			pc: PC,
-			sp: SP,
 		},
 		memory: memory,
 	}
+	snap.regs.SetSP(SP)
+
+	return snap
 }
 
 func (s *snapshot) Equal(cpu CPU, bus *suiteBus) bool {
@@ -223,7 +225,8 @@ func NewTestSuite(ROMPath, SnapPath string) (*testSuite, error) {
 	cpu.registers.H = snaps[0].regs.H
 	cpu.registers.L = snaps[0].regs.L
 	cpu.registers.pc = snaps[0].regs.pc
-	cpu.registers.sp = snaps[0].regs.sp
+	cpu.registers.S = snaps[0].regs.S
+	cpu.registers.P = snaps[0].regs.P
 
 	suite := &testSuite{
 		cpu:   cpu,

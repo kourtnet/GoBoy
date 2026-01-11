@@ -20,7 +20,8 @@ type registers struct {
 	H  byte
 	L  byte
 	pc uint16
-	sp uint16
+	S  byte
+	P  byte
 
 	// temporary regs
 	Temp byte
@@ -44,7 +45,7 @@ func (r *registers) String() string {
 	res += fmt.Sprintf("H %#x ", r.H)
 	res += fmt.Sprintf("L: %#x ", r.L)
 	res += fmt.Sprintf("PC: %#x ", r.pc)
-	res += fmt.Sprintf("SP: %#x", r.sp)
+	res += fmt.Sprintf("SP: %#x", r.SP())
 
 	return res
 }
@@ -101,14 +102,14 @@ func (r *registers) IncDE() {
 	DE := r.DE()
 	DE++
 
-	r.SetBC(DE)
+	r.SetDE(DE)
 }
 
 func (r *registers) DecDE() {
 	DE := r.DE()
 	DE--
 
-	r.SetBC(DE)
+	r.SetDE(DE)
 }
 
 func (r *registers) SetDE(val uint16) {
@@ -144,27 +145,26 @@ func (r *registers) PC() uint16 {
 }
 
 func (r *registers) SP() uint16 {
-	return r.sp
+	return r.r8R8ToR16(r.S, r.P)
 }
 
 func (r *registers) SetSP(val uint16) {
-	r.sp = val
-}
-
-func (r *registers) DecSP() {
-	r.sp--
+	r.S = r.r16Msb(val)
+	r.P = r.r16Lsb(val)
 }
 
 func (r *registers) IncSP() {
-	r.sp++
+	SP := r.SP()
+	SP++
+
+	r.SetSP(SP)
 }
 
-func (r *registers) SPL() byte {
-	return r.r16Lsb(r.sp)
-}
+func (r *registers) DecSP() {
+	SP := r.SP()
+	SP--
 
-func (r *registers) SPH() byte {
-	return r.r16Msb(r.sp)
+	r.SetSP(SP)
 }
 
 func (r *registers) TempAddr() uint16 {
