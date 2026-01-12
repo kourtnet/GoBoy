@@ -43,13 +43,11 @@ func (cpu *CPU) fetchOpcode() error {
 	return nil
 }
 
-// TODO: integration test
 func (cpu *CPU) execute() {
 	cpu.instructions[cpu.registers.IR][cpu.opNum]()
 	cpu.opNum++
 }
 
-// TODO: integration test
 func (cpu *CPU) Step() (bool, error) {
 	cpu.step++
 	// fmt.Printf("Step %d:\n", cpu.step)

@@ -9,7 +9,6 @@ const (
 )
 
 type Bus struct {
-	// TODO: implement separate memory blocks
 	RAM [ramSize]byte
 }
 

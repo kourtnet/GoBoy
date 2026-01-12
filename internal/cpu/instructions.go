@@ -165,12 +165,6 @@ func (cpu *CPU) determine16RegDec(rName string) func() {
 func (cpu *CPU) nop() {
 }
 
-// TODO: ADD FLAGS AND OUT OF RANGE ARITHMETICS
-// WARNING: IS UNUSED NOW
-func (cpu *CPU) incA() {
-	cpu.registers.A++
-}
-
 // this part of package contains funcs with undescore symbols in
 // tneir names. It's intentional and is used only for functions
 // that contain CPU instruction in their names.

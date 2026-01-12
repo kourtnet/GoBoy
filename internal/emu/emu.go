@@ -22,12 +22,10 @@ func Run() {
 
 	cpu, err := cpu.New(bus)
 	if err != nil {
-		// TODO: hide internal error in prod
 		die.Die(err.Error())
 	}
 
 	var cpuEnd bool
-	// TODO: move error check into loop
 	for ; err == nil && !cpuEnd; cpuEnd, err = cpu.Step() {
 	}
 

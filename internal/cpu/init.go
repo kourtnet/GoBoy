@@ -1,6 +1,5 @@
 package cpu
 
-// TODO: integration test
 func New(bus iBus) (CPU, error) {
 	cpu := CPU{
 		registers: &registers{
@@ -155,7 +154,6 @@ func (cpu *CPU) init_LDH() {
 	cpu.instructions[0xF2] = []func(){cpu.readR8Addr('C'), cpu.ld_R8_Temp('A')}
 }
 
-// TODO: get rid of temp func
 func (cpu *CPU) init_LD_HL_Inc_Dec() {
 	cpu.instructions[0x22] = []func(){cpu.ld_R16_Addr_R8_Inc("HL", 'A'), cpu.nop}
 	cpu.instructions[0x2A] = []func(){cpu.readHLAddrInc, cpu.ld_R8_Temp('A')}
