@@ -3,6 +3,9 @@ package cpu
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/kourtnet/GoBoy/internal/cpu/mocks"
@@ -195,10 +198,19 @@ func Test_determine16Reg(t *testing.T) {
 }
 
 func TestWithROMFiles(t *testing.T) {
-	filenames := []string{
-		"ld8", "ld16", "add8", "adc8", "sub8", "sbc8",
-		"cp8", "inc8", "dec8", "and8", "or8", "xor8",
-		"ccf_scf_cpl", "daa", "inc_dec16", "add16",
+	snapDir := "../../testing/snapshots/."
+	files, err := os.ReadDir(snapDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	filenames := make([]string, 0, len(files))
+
+	for _, file := range files {
+		if !file.IsDir() && filepath.Ext(file.Name()) == ".snap" {
+			name := strings.TrimSuffix(file.Name(), ".snap")
+			filenames = append(filenames, name)
+		}
 	}
 
 	ROMPathFormat := "../../testing/roms/%s.rom"
