@@ -23,7 +23,29 @@ type CPU struct {
 	bus       iBus
 }
 
-// WARNING: full test done
+func New(bus iBus) (CPU, error) {
+	cpu := CPU{
+		registers: &registers{
+			pc: 0x100,
+		},
+		bus: bus,
+	}
+
+	// instruction set
+	cpu.initInstructions()
+
+	// Can happen after init functions if determine8/16Reg would
+	// get invalid register name
+	if cpu.internalErr != nil {
+		return CPU{}, cpu.internalErr
+	}
+
+	// Required for initial cpu step of reading opcode, basically a NOP
+	cpu.currInstructionLen = len(cpu.instructions[cpu.registers.IR])
+
+	return cpu, nil
+}
+
 func (cpu *CPU) fetchOpcode() error {
 	var err error
 	cpu.registers.IR, err = cpu.bus.Read(cpu.registers.PC())

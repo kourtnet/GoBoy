@@ -187,7 +187,7 @@ func (r *registers) SetFlagZ(val bool) {
 	r.setFlag(flagZ, val)
 }
 
-func (r *registers) GetFlagZ() bool {
+func (r *registers) FlagZ() bool {
 	return r.getFlag(flagZ)
 }
 
@@ -195,7 +195,7 @@ func (r *registers) SetFlagN(val bool) {
 	r.setFlag(flagN, val)
 }
 
-func (r *registers) GetFlagN() bool {
+func (r *registers) FlagN() bool {
 	return r.getFlag(flagN)
 }
 
@@ -203,7 +203,7 @@ func (r *registers) SetFlagH(val bool) {
 	r.setFlag(flagH, val)
 }
 
-func (r *registers) GetFlagH() bool {
+func (r *registers) FlagH() bool {
 	return r.getFlag(flagH)
 }
 
@@ -211,7 +211,7 @@ func (r *registers) SetFlagC(val bool) {
 	r.setFlag(flagC, val)
 }
 
-func (r *registers) GetFlagC() bool {
+func (r *registers) FlagC() bool {
 	return r.getFlag(flagC)
 }
 

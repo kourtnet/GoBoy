@@ -14,7 +14,7 @@ func (cpu *CPU) readAddr(addr uint16) {
 	}
 }
 
-func (cpu *CPU) readPCAddrAndInc() {
+func (cpu *CPU) readN8() {
 	cpu.readAddr(cpu.registers.pc)
 	if cpu.internalErr != nil {
 		return
@@ -45,13 +45,13 @@ func (cpu *CPU) readR8Addr(rName byte) func() {
 	}
 }
 
-func (cpu *CPU) readAddrLsb() {
-	cpu.readPCAddrAndInc()
+func (cpu *CPU) readN16Lsb() {
+	cpu.readN8()
 	cpu.registers.SetTemp16Lsb(cpu.registers.Temp8)
 }
 
-func (cpu *CPU) readAddrMsb() {
-	cpu.readPCAddrAndInc()
+func (cpu *CPU) readN16Msb() {
+	cpu.readN8()
 	cpu.registers.SetTemp16Msb(cpu.registers.Temp8)
 }
 
@@ -111,7 +111,6 @@ func (cpu *CPU) determine16Reg(rName string) func() uint16 {
 	}
 }
 
-// TODO: test
 func (cpu *CPU) determine16RegSetter(rName string) func(uint16) {
 	switch rName {
 	case "BC":
@@ -165,13 +164,7 @@ func (cpu *CPU) determine16RegDec(rName string) func() {
 func (cpu *CPU) nop() {
 }
 
-// this part of package contains funcs with undescore symbols in
-// tneir names. It's intentional and is used only for functions
-// that contain CPU instruction in their names.
-// For example:
-// LD R8, R8 -> ld_R8_R8
-// LD [R8], R8 -> ld_R8_Addr_R8
-func (cpu *CPU) ld_R8_R8(r1Name, r2Name byte) func() {
+func (cpu *CPU) ldR8R8(r1Name, r2Name byte) func() {
 	if r1Name == r2Name {
 		return func() {}
 	}
@@ -184,14 +177,7 @@ func (cpu *CPU) ld_R8_R8(r1Name, r2Name byte) func() {
 	}
 }
 
-func (cpu *CPU) ld_R8_Temp(rName byte) func() {
-	r := cpu.determine8Reg(rName)
-	return func() {
-		*r = cpu.registers.Temp8
-	}
-}
-
-func (cpu *CPU) ld_R16_Addr_R8(r16Name string, r8Name byte) func() {
+func (cpu *CPU) ldAddrR8(r16Name string, r8Name byte) func() {
 	r16 := cpu.determine16Reg(r16Name)
 	r8 := cpu.determine8Reg(r8Name)
 
@@ -200,18 +186,14 @@ func (cpu *CPU) ld_R16_Addr_R8(r16Name string, r8Name byte) func() {
 	}
 }
 
-func (cpu *CPU) ld_R8_Addr_R8(r1Name, r2Name byte) func() {
+// LDH [n8], A and LDH [C], A 2nd cycle
+func (cpu *CPU) ldhAddrR8(r1Name, r2Name byte) func() {
 	r1 := cpu.determine8Reg(r1Name)
 	r2 := cpu.determine8Reg(r2Name)
 
 	return func() {
 		cpu.bus.Write(0xFF00+uint16(*r1), *r2)
 	}
-}
-
-// there's no LD [R16], N8 instructions rather then with HL
-func (cpu *CPU) ldHLAddrTemp() {
-	cpu.bus.Write(cpu.registers.HL(), cpu.registers.Temp8)
 }
 
 func (cpu *CPU) readHLAddrDec() {
@@ -224,7 +206,7 @@ func (cpu *CPU) readHLAddrInc() {
 	cpu.registers.IncHL()
 }
 
-func (cpu *CPU) ld_R16_R16(r1Name, r2Name string) func() {
+func (cpu *CPU) ldR16R16(r1Name, r2Name string) func() {
 	r1 := cpu.determine16RegSetter(r1Name)
 	r2 := cpu.determine16Reg(r2Name)
 
@@ -233,13 +215,11 @@ func (cpu *CPU) ld_R16_R16(r1Name, r2Name string) func() {
 	}
 }
 
-func (cpu *CPU) ld_TempAddr_SPL() {
+func (cpu *CPU) ldN16AddrSPCycle3() {
 	cpu.bus.Write(cpu.registers.Temp16(), cpu.registers.P)
 }
 
-// +1 in address means this func is used only with ld_TempAddr_SPL for
-// writing SP value into memory
-func (cpu *CPU) ld_TempAddr_SPH() {
+func (cpu *CPU) ldN16AddrSPCycle4() {
 	cpu.bus.Write(cpu.registers.Temp16()+1, cpu.registers.S)
 }
 
@@ -247,7 +227,10 @@ func (cpu *CPU) decSp() {
 	cpu.registers.DecSP()
 }
 
-func (cpu *CPU) ld_R16_Addr_R8_Dec(r1Name string, r2Name byte) func() {
+// This func is used both by LD [HL-], A and PUSH instructions. That's why
+// it can be used for different regs, unlike ldHLPlusACycle2 that is used
+// only by LD [HL+], A
+func (cpu *CPU) ldR16AddrDecR8(r1Name string, r2Name byte) func() {
 	r1 := cpu.determine16Reg(r1Name)
 	r1Dec := cpu.determine16RegDec(r1Name)
 	r2 := cpu.determine8Reg(r2Name)
@@ -258,15 +241,12 @@ func (cpu *CPU) ld_R16_Addr_R8_Dec(r1Name string, r2Name byte) func() {
 	}
 }
 
-func (cpu *CPU) ld_R16_Addr_R8_Inc(r1Name string, r2Name byte) func() {
-	r1 := cpu.determine16Reg(r1Name)
-	r1Inc := cpu.determine16RegInc(r1Name)
-	r2 := cpu.determine8Reg(r2Name)
+func (cpu *CPU) ldHLPlusACycle1() {
+	r1 := cpu.registers.HL()
+	r2 := cpu.registers.A
 
-	return func() {
-		cpu.bus.Write(r1(), *r2)
-		r1Inc()
-	}
+	cpu.bus.Write(r1, r2)
+	cpu.registers.IncHL()
 }
 
 func (cpu *CPU) popLsb() {
@@ -331,7 +311,8 @@ func (cpu *CPU) determineFlagC(a, b uint8, isSub, carry bool) {
 	cpu.registers.SetFlagC(false)
 }
 
-func (cpu *CPU) ld_L_SP_plus_N8() {
+// LDHLSPPlusN8Cycle2 I'm so sorry for this abomination of a name
+func (cpu *CPU) LDHLSPPlusN8Cycle2() {
 	SPL := cpu.registers.P
 	e := cpu.registers.Temp8
 	result := uint16(SPL) + uint16(e)
@@ -352,10 +333,11 @@ func (cpu *CPU) signAdjust(val uint8) uint8 {
 	return 0xFF
 }
 
-func (cpu *CPU) ld_H_SP_plus_N8() {
+// LDHLSPPlusN8Cycle3 And this one
+func (cpu *CPU) LDHLSPPlusN8Cycle3() {
 	adj := cpu.signAdjust(cpu.registers.Temp8)
 	carry := uint8(0)
-	if cpu.registers.GetFlagC() {
+	if cpu.registers.FlagC() {
 		carry = 1
 	}
 
@@ -407,7 +389,7 @@ func (cpu *CPU) adcR8(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		cpu.addVal(*r, cpu.registers.GetFlagC())
+		cpu.addVal(*r, cpu.registers.FlagC())
 	}
 }
 
@@ -432,7 +414,7 @@ func (cpu *CPU) sbcR8(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		cpu.subVal(*r, cpu.registers.GetFlagC())
+		cpu.subVal(*r, cpu.registers.FlagC())
 	}
 }
 
@@ -460,9 +442,9 @@ func (cpu *CPU) incR8(rName byte) func() {
 
 // really goofy name, but it's just a second
 // operation of INC [HL] instruction
-func (cpu *CPU) ldHLAddrTempINC() {
+func (cpu *CPU) incHLAddrCycle2() {
 	cpu.incR8('T')()
-	cpu.ldHLAddrTemp()
+	cpu.ldAddrR8("HL", 'T')()
 }
 
 func (cpu *CPU) decR8(rName byte) func() {
@@ -477,9 +459,9 @@ func (cpu *CPU) decR8(rName byte) func() {
 	}
 }
 
-func (cpu *CPU) ldHLAddrTempDEC() {
+func (cpu *CPU) decHLAddrCycle2() {
 	cpu.decR8('T')()
-	cpu.ldHLAddrTemp()
+	cpu.ldAddrR8("HL", 'T')()
 }
 
 func (cpu *CPU) andR8(rName byte) func() {
@@ -524,7 +506,7 @@ func (cpu *CPU) xorR8(rName byte) func() {
 func (cpu *CPU) ccf() {
 	cpu.registers.SetFlagN(false)
 	cpu.registers.SetFlagH(false)
-	cpu.registers.SetFlagC(!cpu.registers.GetFlagC())
+	cpu.registers.SetFlagC(!cpu.registers.FlagC())
 }
 
 func (cpu *CPU) scf() {
@@ -536,21 +518,21 @@ func (cpu *CPU) scf() {
 func (cpu *CPU) daa() {
 	var offset uint8
 
-	if cpu.registers.GetFlagN() {
-		if cpu.registers.GetFlagH() {
+	if cpu.registers.FlagN() {
+		if cpu.registers.FlagH() {
 			offset += 0x06
 		}
-		if cpu.registers.GetFlagC() {
+		if cpu.registers.FlagC() {
 			offset += 0x60
 		}
 
 		cpu.registers.A -= offset
 	} else {
 		A := cpu.registers.A
-		if cpu.registers.GetFlagH() || (A&0x0F) > 0x9 {
+		if cpu.registers.FlagH() || (A&0x0F) > 0x9 {
 			offset += 0x06
 		}
-		if cpu.registers.GetFlagC() || A > 0x99 {
+		if cpu.registers.FlagC() || A > 0x99 {
 			offset += 0x60
 			cpu.registers.SetFlagC(true)
 		}
@@ -569,7 +551,7 @@ func (cpu *CPU) cpl() {
 	cpu.registers.SetFlagH(true)
 }
 
-func (cpu *CPU) add_R16_L(rName byte) func() {
+func (cpu *CPU) addR16LSB(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
@@ -581,26 +563,24 @@ func (cpu *CPU) add_R16_L(rName byte) func() {
 	}
 }
 
-func (cpu *CPU) add_R16_H(rName byte) func() {
+func (cpu *CPU) addR16MSB(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
 		carry := byte(0)
-		if cpu.registers.GetFlagC() {
+		if cpu.registers.FlagC() {
 			carry = 1
 		}
 
 		cpu.registers.SetFlagN(false)
-		cpu.determineFlagH(cpu.registers.H, *r, false, cpu.registers.GetFlagC())
-		cpu.determineFlagC(cpu.registers.H, *r, false, cpu.registers.GetFlagC())
+		cpu.determineFlagH(cpu.registers.H, *r, false, cpu.registers.FlagC())
+		cpu.determineFlagC(cpu.registers.H, *r, false, cpu.registers.FlagC())
 
 		cpu.registers.H += *r + carry
 	}
 }
 
-// TODO: maybe rename all those strange names (like ld_H_SP_plus_N8 also)
-// to smth like addSPN8Cycle1 addSPN8Cycle2 e.t.c (or step)
-func (cpu *CPU) splPlusN8() {
+func (cpu *CPU) addSPN8Cycle2() {
 	cpu.registers.SetFlagZ(false)
 	cpu.registers.SetFlagN(false)
 	cpu.determineFlagH(cpu.registers.P, cpu.registers.Temp8, false, false)
@@ -609,9 +589,9 @@ func (cpu *CPU) splPlusN8() {
 	cpu.registers.SetTemp16Lsb(cpu.registers.P + cpu.registers.Temp8)
 }
 
-func (cpu *CPU) sphPlusN8() {
+func (cpu *CPU) addSPN8Cycle3() {
 	res := cpu.registers.S + cpu.signAdjust(cpu.registers.Temp8)
-	if cpu.registers.GetFlagC() {
+	if cpu.registers.FlagC() {
 		res++
 	}
 
