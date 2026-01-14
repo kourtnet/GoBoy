@@ -86,8 +86,8 @@ func newSnapshot(A, F, B, C, D, E, H, L byte, PC, SP uint16, memory []byte) snap
 }
 
 func (s *snapshot) Equal(cpu CPU, bus *suiteBus) bool {
-	s.regs.Temp = cpu.registers.Temp
-	s.regs.tempAddr = cpu.registers.tempAddr
+	s.regs.Temp8 = cpu.registers.Temp8
+	s.regs.temp16 = cpu.registers.temp16
 	s.regs.IR = cpu.registers.IR
 
 	if *cpu.registers != s.regs {

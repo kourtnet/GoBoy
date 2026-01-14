@@ -1,13 +1,13 @@
 package cpu
 
 import (
-	"errors"
+	"fmt"
 )
 
 func (cpu *CPU) readAddr(addr uint16) {
 	var err error
 
-	cpu.registers.Temp, err = cpu.bus.Read(addr)
+	cpu.registers.Temp8, err = cpu.bus.Read(addr)
 	if err != nil {
 		cpu.internalErr = err
 		return
@@ -47,12 +47,12 @@ func (cpu *CPU) readR8Addr(rName byte) func() {
 
 func (cpu *CPU) readAddrLsb() {
 	cpu.readPCAddrAndInc()
-	cpu.registers.SetTempAddrLsb(cpu.registers.Temp)
+	cpu.registers.SetTemp16Lsb(cpu.registers.Temp8)
 }
 
 func (cpu *CPU) readAddrMsb() {
 	cpu.readPCAddrAndInc()
-	cpu.registers.SetTempAddrMsb(cpu.registers.Temp)
+	cpu.registers.SetTemp16Msb(cpu.registers.Temp8)
 }
 
 func (cpu *CPU) determine8Reg(rName byte) *byte {
@@ -81,9 +81,9 @@ func (cpu *CPU) determine8Reg(rName byte) *byte {
 		return &cpu.registers.P
 	// Special processing for easier memory reading with immediate addr
 	case 'T':
-		return &cpu.registers.Temp
+		return &cpu.registers.Temp8
 	default:
-		cpu.internalErr = errors.New("unknown register name " + string(rName))
+		cpu.internalErr = fmt.Errorf("unknown register name '%s'", string(rName))
 		return &errReg
 	}
 }
@@ -103,10 +103,10 @@ func (cpu *CPU) determine16Reg(rName string) func() uint16 {
 	case "SP":
 		return cpu.registers.SP
 	// Special processing for easier memory reading with immediate addr
-	case "TempAddr":
-		return cpu.registers.TempAddr
+	case "Temp16":
+		return cpu.registers.Temp16
 	default:
-		cpu.internalErr = errors.New("unknown register name " + rName)
+		cpu.internalErr = fmt.Errorf("unknown register name '%s'", rName)
 		return func() uint16 { return 0 }
 	}
 }
@@ -125,7 +125,7 @@ func (cpu *CPU) determine16RegSetter(rName string) func(uint16) {
 	case "AF":
 		return cpu.registers.SetAF
 	default:
-		cpu.internalErr = errors.New("unknown register name " + rName)
+		cpu.internalErr = fmt.Errorf("unknown register name '%s'", rName)
 		return func(uint16) {}
 	}
 }
@@ -141,7 +141,7 @@ func (cpu *CPU) determine16RegInc(rName string) func() {
 	case "SP":
 		return cpu.registers.IncSP
 	default:
-		cpu.internalErr = errors.New("unknown register name " + rName)
+		cpu.internalErr = fmt.Errorf("unknown register name '%s'", rName)
 		return func() {}
 	}
 }
@@ -157,7 +157,7 @@ func (cpu *CPU) determine16RegDec(rName string) func() {
 	case "SP":
 		return cpu.registers.DecSP
 	default:
-		cpu.internalErr = errors.New("unknown register name " + rName)
+		cpu.internalErr = fmt.Errorf("unknown register name '%s'", rName)
 		return func() {}
 	}
 }
@@ -187,7 +187,7 @@ func (cpu *CPU) ld_R8_R8(r1Name, r2Name byte) func() {
 func (cpu *CPU) ld_R8_Temp(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 	return func() {
-		*r = cpu.registers.Temp
+		*r = cpu.registers.Temp8
 	}
 }
 
@@ -211,7 +211,7 @@ func (cpu *CPU) ld_R8_Addr_R8(r1Name, r2Name byte) func() {
 
 // there's no LD [R16], N8 instructions rather then with HL
 func (cpu *CPU) ldHLAddrTemp() {
-	cpu.bus.Write(cpu.registers.HL(), cpu.registers.Temp)
+	cpu.bus.Write(cpu.registers.HL(), cpu.registers.Temp8)
 }
 
 func (cpu *CPU) readHLAddrDec() {
@@ -234,13 +234,13 @@ func (cpu *CPU) ld_R16_R16(r1Name, r2Name string) func() {
 }
 
 func (cpu *CPU) ld_TempAddr_SPL() {
-	cpu.bus.Write(cpu.registers.TempAddr(), cpu.registers.P)
+	cpu.bus.Write(cpu.registers.Temp16(), cpu.registers.P)
 }
 
 // +1 in address means this func is used only with ld_TempAddr_SPL for
 // writing SP value into memory
 func (cpu *CPU) ld_TempAddr_SPH() {
-	cpu.bus.Write(cpu.registers.TempAddr()+1, cpu.registers.S)
+	cpu.bus.Write(cpu.registers.Temp16()+1, cpu.registers.S)
 }
 
 func (cpu *CPU) decSp() {
@@ -271,13 +271,13 @@ func (cpu *CPU) ld_R16_Addr_R8_Inc(r1Name string, r2Name byte) func() {
 
 func (cpu *CPU) popLsb() {
 	cpu.readAddr(cpu.registers.SP())
-	cpu.registers.SetTempAddrLsb(cpu.registers.Temp)
+	cpu.registers.SetTemp16Lsb(cpu.registers.Temp8)
 	cpu.registers.IncSP()
 }
 
 func (cpu *CPU) popMsb() {
 	cpu.readAddr(cpu.registers.SP())
-	cpu.registers.SetTempAddrMsb(cpu.registers.Temp)
+	cpu.registers.SetTemp16Msb(cpu.registers.Temp8)
 	cpu.registers.IncSP()
 }
 
@@ -333,7 +333,7 @@ func (cpu *CPU) determineFlagC(a, b uint8, isSub, carry bool) {
 
 func (cpu *CPU) ld_L_SP_plus_N8() {
 	SPL := cpu.registers.P
-	e := cpu.registers.Temp
+	e := cpu.registers.Temp8
 	result := uint16(SPL) + uint16(e)
 
 	cpu.registers.SetFlagZ(false)
@@ -353,7 +353,7 @@ func (cpu *CPU) signAdjust(val uint8) uint8 {
 }
 
 func (cpu *CPU) ld_H_SP_plus_N8() {
-	adj := cpu.signAdjust(cpu.registers.Temp)
+	adj := cpu.signAdjust(cpu.registers.Temp8)
 	carry := uint8(0)
 	if cpu.registers.GetFlagC() {
 		carry = 1
@@ -603,17 +603,17 @@ func (cpu *CPU) add_R16_H(rName byte) func() {
 func (cpu *CPU) splPlusN8() {
 	cpu.registers.SetFlagZ(false)
 	cpu.registers.SetFlagN(false)
-	cpu.determineFlagH(cpu.registers.P, cpu.registers.Temp, false, false)
-	cpu.determineFlagC(cpu.registers.P, cpu.registers.Temp, false, false)
+	cpu.determineFlagH(cpu.registers.P, cpu.registers.Temp8, false, false)
+	cpu.determineFlagC(cpu.registers.P, cpu.registers.Temp8, false, false)
 
-	cpu.registers.SetTempAddrLsb(cpu.registers.P + cpu.registers.Temp)
+	cpu.registers.SetTemp16Lsb(cpu.registers.P + cpu.registers.Temp8)
 }
 
 func (cpu *CPU) sphPlusN8() {
-	res := cpu.registers.S + cpu.signAdjust(cpu.registers.Temp)
+	res := cpu.registers.S + cpu.signAdjust(cpu.registers.Temp8)
 	if cpu.registers.GetFlagC() {
 		res++
 	}
 
-	cpu.registers.SetTempAddrMsb(res)
+	cpu.registers.SetTemp16Msb(res)
 }

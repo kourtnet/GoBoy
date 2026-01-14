@@ -10,6 +10,7 @@ import (
 
 	"github.com/kourtnet/GoBoy/internal/cpu/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
@@ -51,7 +52,7 @@ func Test_readAddr(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			cpu.registers.Temp = 0
+			cpu.registers.Temp8 = 0
 
 			cpu.readAddr(c.addr)
 
@@ -59,7 +60,7 @@ func Test_readAddr(t *testing.T) {
 				assert.Error(t, cpu.internalErr)
 			} else {
 				assert.NoError(t, cpu.internalErr)
-				assert.Equal(t, cpu.registers.Temp, c.retVal)
+				assert.Equal(t, cpu.registers.Temp8, c.retVal)
 			}
 		})
 	}
@@ -104,7 +105,7 @@ func Test_determine8Reg(t *testing.T) {
 		},
 		{
 			name: 'T',
-			reg:  &cpu.registers.Temp,
+			reg:  &cpu.registers.Temp8,
 		},
 		{
 			name:    'U',
@@ -160,8 +161,8 @@ func Test_determine16Reg(t *testing.T) {
 			reg:  cpu.registers.SP,
 		},
 		{
-			name: "TempAddr",
-			reg:  cpu.registers.TempAddr,
+			name: "Temp16",
+			reg:  cpu.registers.Temp16,
 		},
 		{
 			name:    "Invalid Address",
@@ -192,6 +193,150 @@ func Test_determine16Reg(t *testing.T) {
 				want := c.reg()
 				get := reg()
 				assert.Equal(t, want, get)
+			}
+		})
+	}
+}
+
+func Test_determine16RegSetter(t *testing.T) {
+	cpu := CPU{}
+	cpu.registers = &registers{}
+
+	cases := []struct {
+		name    string
+		reg     func() uint16
+		wantErr bool
+	}{
+		{
+			name: "AF",
+			reg:  cpu.registers.AF,
+		},
+		{
+			name: "BC",
+			reg:  cpu.registers.BC,
+		},
+		{
+			name: "DE",
+			reg:  cpu.registers.DE,
+		},
+		{
+			name: "HL",
+			reg:  cpu.registers.HL,
+		},
+		{
+			name: "SP",
+			reg:  cpu.registers.SP,
+		},
+		{
+			name:    "Invalid Address",
+			wantErr: true,
+		},
+	}
+
+	add := uint16(0x1234)
+	setVal := add
+
+	for _, c := range cases {
+		t.Run(string(c.name)+" register setter", func(t *testing.T) {
+			regSetter := cpu.determine16RegSetter(c.name)
+
+			if c.wantErr {
+				assert.Error(t, cpu.internalErr)
+			} else {
+				assert.NoError(t, cpu.internalErr)
+
+				reg := cpu.determine16Reg(c.name)
+				require.NoError(t, cpu.internalErr)
+
+				regSetter(setVal)
+				assert.Equal(t, setVal, reg())
+
+				setVal += add
+			}
+		})
+	}
+}
+
+func Test_determine16RegINC_DEC(t *testing.T) {
+	cpu := CPU{}
+	cpu.registers = &registers{}
+
+	cases := []struct {
+		name    string
+		reg     func() uint16
+		wantErr bool
+	}{
+		{
+			name: "BC",
+			reg:  cpu.registers.BC,
+		},
+		{
+			name: "DE",
+			reg:  cpu.registers.DE,
+		},
+		{
+			name: "HL",
+			reg:  cpu.registers.HL,
+		},
+		{
+			name: "SP",
+			reg:  cpu.registers.SP,
+		},
+		{
+			name:    "Invalid Address",
+			wantErr: true,
+		},
+	}
+
+	add := uint16(0x1234)
+	setVal := add
+
+	for _, c := range cases {
+		t.Run(string(c.name)+" register inc", func(t *testing.T) {
+			regInc := cpu.determine16RegInc(c.name)
+
+			if c.wantErr {
+				assert.Error(t, cpu.internalErr)
+			} else {
+				assert.NoError(t, cpu.internalErr)
+
+				reg := cpu.determine16Reg(c.name)
+				regSetter := cpu.determine16RegSetter(c.name)
+				require.NoError(t, cpu.internalErr)
+
+				regSetter(setVal)
+
+				regInc()
+
+				assert.Equal(t, setVal+1, reg())
+
+				setVal += add
+			}
+		})
+	}
+
+	cpu.internalErr = nil
+
+	for _, c := range cases {
+		t.Run(string(c.name)+" register dec", func(t *testing.T) {
+			regDec := cpu.determine16RegDec(c.name)
+
+			if c.wantErr {
+				assert.Error(t, cpu.internalErr)
+			} else {
+				assert.NoError(t, cpu.internalErr)
+
+				reg := cpu.determine16Reg(c.name)
+				regSetter := cpu.determine16RegSetter(c.name)
+				require.NoError(t, cpu.internalErr)
+
+				regSetter(setVal)
+
+				regDec()
+
+				assert.Equal(t, setVal-1, reg())
+
+				setVal += add
 			}
 		})
 	}

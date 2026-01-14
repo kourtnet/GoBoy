@@ -142,8 +142,8 @@ func (cpu *CPU) init_LD_N16_Addr() {
 	// Here memory write happens on the first M-cycle. I find it strange, but doc
 	// states that it's true. Gonna examine it once I will run test-ROMs
 	cpu.instructions[0x36] = []func(){cpu.readPCAddrAndInc, cpu.ldHLAddrTemp, cpu.nop}
-	cpu.instructions[0xEA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_Addr_R8("TempAddr", 'A'), cpu.nop}
-	cpu.instructions[0xFA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("TempAddr"), cpu.ld_R8_Temp('A')}
+	cpu.instructions[0xEA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_Addr_R8("Temp16", 'A'), cpu.nop}
+	cpu.instructions[0xFA] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.readR16Addr("Temp16"), cpu.ld_R8_Temp('A')}
 }
 
 func (cpu *CPU) init_LDH() {
@@ -176,10 +176,10 @@ func (cpu *CPU) initLD16() {
 
 // TODO: rename readAddrLsb, readAddrMsb and readPCAddrAndInc. Smth like readN8, readN16Msb, readN16Lsb
 func (cpu *CPU) init_LD_R16_N16() {
-	cpu.instructions[0x01] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("BC", "TempAddr")}
-	cpu.instructions[0x11] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("DE", "TempAddr")}
-	cpu.instructions[0x21] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("HL", "TempAddr")}
-	cpu.instructions[0x31] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("SP", "TempAddr")}
+	cpu.instructions[0x01] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("BC", "Temp16")}
+	cpu.instructions[0x11] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("DE", "Temp16")}
+	cpu.instructions[0x21] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("HL", "Temp16")}
+	cpu.instructions[0x31] = []func(){cpu.readAddrLsb, cpu.readAddrMsb, cpu.ld_R16_R16("SP", "Temp16")}
 }
 
 func (cpu *CPU) InitPush() {
@@ -190,10 +190,10 @@ func (cpu *CPU) InitPush() {
 }
 
 func (cpu *CPU) InitPop() {
-	cpu.instructions[0xC1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("BC", "TempAddr")}
-	cpu.instructions[0xD1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("DE", "TempAddr")}
-	cpu.instructions[0xE1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("HL", "TempAddr")}
-	cpu.instructions[0xF1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("AF", "TempAddr")}
+	cpu.instructions[0xC1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("BC", "Temp16")}
+	cpu.instructions[0xD1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("DE", "Temp16")}
+	cpu.instructions[0xE1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("HL", "Temp16")}
+	cpu.instructions[0xF1] = []func(){cpu.popLsb, cpu.popMsb, cpu.ld_R16_R16("AF", "Temp16")}
 }
 
 func (cpu *CPU) initArithmeticAndLogic() {
@@ -226,7 +226,7 @@ func (cpu *CPU) init_ADD_ADC() {
 	// ADC n8
 	cpu.instructions[0xCE] = []func(){cpu.readPCAddrAndInc, cpu.adcR8('T')}
 	// ADD SP, n8
-	cpu.instructions[0xE8] = []func(){cpu.readPCAddrAndInc, cpu.splPlusN8, cpu.sphPlusN8, cpu.ld_R16_R16("SP", "TempAddr")}
+	cpu.instructions[0xE8] = []func(){cpu.readPCAddrAndInc, cpu.splPlusN8, cpu.sphPlusN8, cpu.ld_R16_R16("SP", "Temp16")}
 
 	cpu.init_ADD_R8()
 	cpu.init_ADD_R16()

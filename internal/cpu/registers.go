@@ -24,12 +24,8 @@ type registers struct {
 	P  byte
 
 	// temporary regs
-	Temp byte
-	// TODO: rename. Now tempAddr is used not only as an adress,
-	// but as a temporal register also. So the name is a bit
-	// confusing. Suggestion: rename temp to temp8 and tempAddr
-	// to temp16
-	tempAddr uint16
+	Temp8  byte
+	temp16 uint16
 }
 
 func (r *registers) String() string {
@@ -167,8 +163,8 @@ func (r *registers) DecSP() {
 	r.SetSP(SP)
 }
 
-func (r *registers) TempAddr() uint16 {
-	return r.tempAddr
+func (r *registers) Temp16() uint16 {
+	return r.temp16
 }
 
 func (r *registers) IncPC() {
@@ -219,12 +215,12 @@ func (r *registers) GetFlagC() bool {
 	return r.getFlag(flagC)
 }
 
-func (r *registers) SetTempAddrMsb(v byte) {
-	r.tempAddr = r.r8R8ToR16(v, r.r16Lsb(r.tempAddr))
+func (r *registers) SetTemp16Msb(v byte) {
+	r.temp16 = r.r8R8ToR16(v, r.r16Lsb(r.temp16))
 }
 
 // Lsb set also clears prev tempAddr value and writes FF into Msb
 // it is required for indirect addresses where Msb part is always FF
-func (r *registers) SetTempAddrLsb(v byte) {
-	r.tempAddr = r.r8R8ToR16(0xFF, v)
+func (r *registers) SetTemp16Lsb(v byte) {
+	r.temp16 = r.r8R8ToR16(0xFF, v)
 }
