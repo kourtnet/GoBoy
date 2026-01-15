@@ -2,8 +2,11 @@
 package debugger
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/kourtnet/GoBoy/internal/bus"
 	"github.com/kourtnet/GoBoy/internal/cpu"
 )
 
@@ -19,7 +22,7 @@ type entry struct {
 
 type Debugger struct {
 	cpu *cpu.CPU
-	bus bus
+	bus *bus.Bus
 
 	instructions        [instructionsNum]instruction
 	entriesTail         *entry
@@ -28,10 +31,10 @@ type Debugger struct {
 	nextInstructionAddr uint16
 }
 
-func New(cpu *cpu.CPU, bus bus) (*Debugger, error) {
+func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
 	deb := Debugger{
 		cpu: cpu,
-		bus: bus,
+		bus: b,
 	}
 
 	deb.initInstructions()
@@ -40,7 +43,12 @@ func New(cpu *cpu.CPU, bus bus) (*Debugger, error) {
 	for range entriesOnScreen {
 		err := deb.newEntry()
 		if err != nil {
-			return nil, err
+			var ourErr bus.OutOfRange
+			if !errors.As(err, &ourErr) {
+				return nil, err
+			}
+
+			break
 		}
 	}
 
@@ -86,29 +94,31 @@ func (deb *Debugger) newEntryStr() (string, error) {
 		instruction = deb.instructions[opcode]
 	}
 
-	byteSeq := make([]byte, instruction.argsNum+1)
+	instruction.ArgsFormat = strings.ReplaceAll(instruction.ArgsFormat, "n16", "n8n8")
+	byteSeq := make([]byte, 1, 3)
 	byteSeq[0] = opcode
 
-	for i := range instruction.argsNum {
+	for strings.Contains(instruction.ArgsFormat, "n8") {
 		arg, err := deb.bus.Read(deb.nextInstructionAddr)
 		if err != nil {
-			return "", err
+			var oufErr bus.OutOfRange
+			if !errors.As(err, &oufErr) {
+				return "", err
+			}
+
+			instruction.ArgsFormat = strings.ReplaceAll(instruction.ArgsFormat, "n8", "??")
+			instruction.ArgsFormat += " INCOMPLETE INSTRUCTION"
 		}
 
-		byteSeq[i+1] = arg
 		deb.nextInstructionAddr++
-	}
 
-	var argsStr string
-	switch instruction.argsNum {
-	case 0:
-		argsStr = instruction.ArgsFormat
-	case 1:
-		argsStr = fmt.Sprintf(instruction.ArgsFormat, byteSeq[1])
-	case 2:
-		argsStr = fmt.Sprintf(instruction.ArgsFormat, byteSeq[2], byteSeq[1])
-	default:
-		return "", fmt.Errorf("invalid number of arguments for %x opcode", byteSeq[0])
+		idx := strings.LastIndex(instruction.ArgsFormat, "n8")
+		if idx == -1 {
+			break
+		}
+
+		instruction.ArgsFormat = instruction.ArgsFormat[:idx] + fmt.Sprintf("%02X", arg) + instruction.ArgsFormat[idx+len("n8"):]
+		byteSeq = append(byteSeq, arg)
 	}
 
 	str := fmt.Sprintf(
@@ -116,7 +126,8 @@ func (deb *Debugger) newEntryStr() (string, error) {
 		instructionAddr,
 		byteSeq,
 		instruction.name,
-		argsStr)
+		instruction.ArgsFormat,
+	)
 
 	return str, nil
 }
