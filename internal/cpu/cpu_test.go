@@ -49,14 +49,14 @@ func Test_fetchOpcode(t *testing.T) {
 		Return(uint8(0), nil)
 
 	cpu := CPU{}
-	cpu.registers = &registers{}
+	cpu.Registers = &Registers{}
 	cpu.bus = busMock
 	cpu.instructions[1] = []func(){func() {}}
 	cpu.opNum = 1
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			cpu.registers.pc = c.PC
+			cpu.Registers.pc = c.PC
 			err := cpu.fetchOpcode()
 			if c.wantErr {
 				assert.Error(t, err)
@@ -64,7 +64,7 @@ func Test_fetchOpcode(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, cpu.opNum, 0)
-				assert.Equal(t, cpu.registers.IR, uint8(1))
+				assert.Equal(t, cpu.Registers.IR, uint8(1))
 			}
 		})
 	}

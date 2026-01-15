@@ -40,7 +40,7 @@ func TestWordRegisterGetters(t *testing.T) {
 		},
 	}
 
-	regs := registers{}
+	regs := Registers{}
 
 	funcs := []struct {
 		name string
@@ -103,7 +103,7 @@ func TestIncHL(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			regs := registers{}
+			regs := Registers{}
 			regs.H = byte(c.val >> 8)
 			regs.L = byte(c.val & 0x00FF)
 
@@ -126,7 +126,7 @@ func TestDecHL(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			regs := registers{}
+			regs := Registers{}
 			regs.H = byte(c.val >> 8)
 			regs.L = byte(c.val & 0x00FF)
 

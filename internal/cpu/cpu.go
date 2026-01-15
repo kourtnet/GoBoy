@@ -19,13 +19,13 @@ type CPU struct {
 	// and process later in the Step().
 	internalErr error
 
-	registers *registers
+	Registers *Registers
 	bus       iBus
 }
 
 func New(bus iBus) (CPU, error) {
 	cpu := CPU{
-		registers: &registers{
+		Registers: &Registers{
 			pc: 0x100,
 		},
 		bus: bus,
@@ -41,32 +41,32 @@ func New(bus iBus) (CPU, error) {
 	}
 
 	// Required for initial cpu step of reading opcode, basically a NOP
-	cpu.currInstructionLen = len(cpu.instructions[cpu.registers.IR])
+	cpu.currInstructionLen = len(cpu.instructions[cpu.Registers.IR])
 
 	return cpu, nil
 }
 
 func (cpu *CPU) fetchOpcode() error {
 	var err error
-	cpu.registers.IR, err = cpu.bus.Read(cpu.registers.PC())
+	cpu.Registers.IR, err = cpu.bus.Read(cpu.Registers.PC())
 	if err != nil {
 		return err
 	}
 
 	cpu.opNum = 0
 
-	cpu.currInstructionLen = len(cpu.instructions[cpu.registers.IR])
+	cpu.currInstructionLen = len(cpu.instructions[cpu.Registers.IR])
 	if cpu.currInstructionLen == 0 {
-		return fmt.Errorf("unknown opcode at: 0x%x", cpu.registers.PC())
+		return fmt.Errorf("unknown opcode at: 0x%x", cpu.Registers.PC())
 	}
 
-	cpu.registers.IncPC()
+	cpu.Registers.IncPC()
 
 	return nil
 }
 
 func (cpu *CPU) execute() {
-	cpu.instructions[cpu.registers.IR][cpu.opNum]()
+	cpu.instructions[cpu.Registers.IR][cpu.opNum]()
 	cpu.opNum++
 }
 
@@ -86,9 +86,9 @@ func (cpu *CPU) Step() (bool, error) {
 	}
 
 	// TODO: write a debugger instead of this
-	//	fmt.Printf("Regs:\n%s\n", cpu.registers)
+	//	fmt.Printf("Regs:\n%s\n", cpu.Registers)
 	//	fmt.Println("16-bit regs:")
-	//	fmt.Printf("AF: %#x BC: %#x DE: %#x HL: %#x\n", cpu.registers.AF(), cpu.registers.BC(), cpu.registers.DE(), cpu.registers.HL())
+	//	fmt.Printf("AF: %#x BC: %#x DE: %#x HL: %#x\n", cpu.Registers.AF(), cpu.Registers.BC(), cpu.Registers.DE(), cpu.Registers.HL())
 
 	return false, nil
 }

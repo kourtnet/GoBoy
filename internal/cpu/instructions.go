@@ -7,7 +7,7 @@ import (
 func (cpu *CPU) readAddr(addr uint16) {
 	var err error
 
-	cpu.registers.Temp8, err = cpu.bus.Read(addr)
+	cpu.Registers.Temp8, err = cpu.bus.Read(addr)
 	if err != nil {
 		cpu.internalErr = err
 		return
@@ -15,12 +15,12 @@ func (cpu *CPU) readAddr(addr uint16) {
 }
 
 func (cpu *CPU) readN8() {
-	cpu.readAddr(cpu.registers.pc)
+	cpu.readAddr(cpu.Registers.pc)
 	if cpu.internalErr != nil {
 		return
 	}
 
-	cpu.registers.IncPC()
+	cpu.Registers.IncPC()
 }
 
 func (cpu *CPU) readR16Addr(rName string) func() {
@@ -47,12 +47,12 @@ func (cpu *CPU) readR8Addr(rName byte) func() {
 
 func (cpu *CPU) readN16Lsb() {
 	cpu.readN8()
-	cpu.registers.SetTemp16Lsb(cpu.registers.Temp8)
+	cpu.Registers.SetTemp16Lsb(cpu.Registers.Temp8)
 }
 
 func (cpu *CPU) readN16Msb() {
 	cpu.readN8()
-	cpu.registers.SetTemp16Msb(cpu.registers.Temp8)
+	cpu.Registers.SetTemp16Msb(cpu.Registers.Temp8)
 }
 
 func (cpu *CPU) determine8Reg(rName byte) *byte {
@@ -60,28 +60,28 @@ func (cpu *CPU) determine8Reg(rName byte) *byte {
 
 	switch rName {
 	case 'A':
-		return &cpu.registers.A
+		return &cpu.Registers.A
 	case 'F':
-		return &cpu.registers.F
+		return &cpu.Registers.F
 	case 'B':
-		return &cpu.registers.B
+		return &cpu.Registers.B
 	case 'C':
-		return &cpu.registers.C
+		return &cpu.Registers.C
 	case 'D':
-		return &cpu.registers.D
+		return &cpu.Registers.D
 	case 'E':
-		return &cpu.registers.E
+		return &cpu.Registers.E
 	case 'H':
-		return &cpu.registers.H
+		return &cpu.Registers.H
 	case 'L':
-		return &cpu.registers.L
+		return &cpu.Registers.L
 	case 'S':
-		return &cpu.registers.S
+		return &cpu.Registers.S
 	case 'P':
-		return &cpu.registers.P
+		return &cpu.Registers.P
 	// Special processing for easier memory reading with immediate addr
 	case 'T':
-		return &cpu.registers.Temp8
+		return &cpu.Registers.Temp8
 	default:
 		cpu.internalErr = fmt.Errorf("unknown register name '%s'", string(rName))
 		return &errReg
@@ -91,20 +91,20 @@ func (cpu *CPU) determine8Reg(rName byte) *byte {
 func (cpu *CPU) determine16Reg(rName string) func() uint16 {
 	switch rName {
 	case "AF":
-		return cpu.registers.AF
+		return cpu.Registers.AF
 	case "BC":
-		return cpu.registers.BC
+		return cpu.Registers.BC
 	case "DE":
-		return cpu.registers.DE
+		return cpu.Registers.DE
 	case "HL":
-		return cpu.registers.HL
+		return cpu.Registers.HL
 	case "PC":
-		return cpu.registers.PC
+		return cpu.Registers.PC
 	case "SP":
-		return cpu.registers.SP
+		return cpu.Registers.SP
 	// Special processing for easier memory reading with immediate addr
 	case "Temp16":
-		return cpu.registers.Temp16
+		return cpu.Registers.Temp16
 	default:
 		cpu.internalErr = fmt.Errorf("unknown register name '%s'", rName)
 		return func() uint16 { return 0 }
@@ -114,15 +114,15 @@ func (cpu *CPU) determine16Reg(rName string) func() uint16 {
 func (cpu *CPU) determine16RegSetter(rName string) func(uint16) {
 	switch rName {
 	case "BC":
-		return cpu.registers.SetBC
+		return cpu.Registers.SetBC
 	case "DE":
-		return cpu.registers.SetDE
+		return cpu.Registers.SetDE
 	case "HL":
-		return cpu.registers.SetHL
+		return cpu.Registers.SetHL
 	case "SP":
-		return cpu.registers.SetSP
+		return cpu.Registers.SetSP
 	case "AF":
-		return cpu.registers.SetAF
+		return cpu.Registers.SetAF
 	default:
 		cpu.internalErr = fmt.Errorf("unknown register name '%s'", rName)
 		return func(uint16) {}
@@ -132,13 +132,13 @@ func (cpu *CPU) determine16RegSetter(rName string) func(uint16) {
 func (cpu *CPU) determine16RegInc(rName string) func() {
 	switch rName {
 	case "BC":
-		return cpu.registers.IncBC
+		return cpu.Registers.IncBC
 	case "DE":
-		return cpu.registers.IncDE
+		return cpu.Registers.IncDE
 	case "HL":
-		return cpu.registers.IncHL
+		return cpu.Registers.IncHL
 	case "SP":
-		return cpu.registers.IncSP
+		return cpu.Registers.IncSP
 	default:
 		cpu.internalErr = fmt.Errorf("unknown register name '%s'", rName)
 		return func() {}
@@ -148,13 +148,13 @@ func (cpu *CPU) determine16RegInc(rName string) func() {
 func (cpu *CPU) determine16RegDec(rName string) func() {
 	switch rName {
 	case "BC":
-		return cpu.registers.DecBC
+		return cpu.Registers.DecBC
 	case "DE":
-		return cpu.registers.DecDE
+		return cpu.Registers.DecDE
 	case "HL":
-		return cpu.registers.DecHL
+		return cpu.Registers.DecHL
 	case "SP":
-		return cpu.registers.DecSP
+		return cpu.Registers.DecSP
 	default:
 		cpu.internalErr = fmt.Errorf("unknown register name '%s'", rName)
 		return func() {}
@@ -198,12 +198,12 @@ func (cpu *CPU) ldhAddrR8(r1Name, r2Name byte) func() {
 
 func (cpu *CPU) readHLAddrDec() {
 	cpu.readR16Addr("HL")()
-	cpu.registers.DecHL()
+	cpu.Registers.DecHL()
 }
 
 func (cpu *CPU) readHLAddrInc() {
 	cpu.readR16Addr("HL")()
-	cpu.registers.IncHL()
+	cpu.Registers.IncHL()
 }
 
 func (cpu *CPU) ldR16R16(r1Name, r2Name string) func() {
@@ -216,15 +216,15 @@ func (cpu *CPU) ldR16R16(r1Name, r2Name string) func() {
 }
 
 func (cpu *CPU) ldN16AddrSPCycle3() {
-	cpu.bus.Write(cpu.registers.Temp16(), cpu.registers.P)
+	cpu.bus.Write(cpu.Registers.Temp16(), cpu.Registers.P)
 }
 
 func (cpu *CPU) ldN16AddrSPCycle4() {
-	cpu.bus.Write(cpu.registers.Temp16()+1, cpu.registers.S)
+	cpu.bus.Write(cpu.Registers.Temp16()+1, cpu.Registers.S)
 }
 
 func (cpu *CPU) decSp() {
-	cpu.registers.DecSP()
+	cpu.Registers.DecSP()
 }
 
 // This func is used both by LD [HL-], A and PUSH instructions. That's why
@@ -242,23 +242,23 @@ func (cpu *CPU) ldR16AddrDecR8(r1Name string, r2Name byte) func() {
 }
 
 func (cpu *CPU) ldHLPlusACycle1() {
-	r1 := cpu.registers.HL()
-	r2 := cpu.registers.A
+	r1 := cpu.Registers.HL()
+	r2 := cpu.Registers.A
 
 	cpu.bus.Write(r1, r2)
-	cpu.registers.IncHL()
+	cpu.Registers.IncHL()
 }
 
 func (cpu *CPU) popLsb() {
-	cpu.readAddr(cpu.registers.SP())
-	cpu.registers.SetTemp16Lsb(cpu.registers.Temp8)
-	cpu.registers.IncSP()
+	cpu.readAddr(cpu.Registers.SP())
+	cpu.Registers.SetTemp16Lsb(cpu.Registers.Temp8)
+	cpu.Registers.IncSP()
 }
 
 func (cpu *CPU) popMsb() {
-	cpu.readAddr(cpu.registers.SP())
-	cpu.registers.SetTemp16Msb(cpu.registers.Temp8)
-	cpu.registers.IncSP()
+	cpu.readAddr(cpu.Registers.SP())
+	cpu.Registers.SetTemp16Msb(cpu.Registers.Temp8)
+	cpu.Registers.IncSP()
 }
 
 func (cpu *CPU) determineFlagH(a, b uint8, isSub, carry bool) {
@@ -279,11 +279,11 @@ func (cpu *CPU) determineFlagH(a, b uint8, isSub, carry bool) {
 	}
 
 	if res > 0x0F {
-		cpu.registers.SetFlagH(true)
+		cpu.Registers.SetFlagH(true)
 		return
 	}
 
-	cpu.registers.SetFlagH(false)
+	cpu.Registers.SetFlagH(false)
 }
 
 func (cpu *CPU) determineFlagC(a, b uint8, isSub, carry bool) {
@@ -304,25 +304,25 @@ func (cpu *CPU) determineFlagC(a, b uint8, isSub, carry bool) {
 	}
 
 	if res > 0x0FF {
-		cpu.registers.SetFlagC(true)
+		cpu.Registers.SetFlagC(true)
 		return
 	}
 
-	cpu.registers.SetFlagC(false)
+	cpu.Registers.SetFlagC(false)
 }
 
 // LDHLSPPlusN8Cycle2 I'm so sorry for this abomination of a name
 func (cpu *CPU) LDHLSPPlusN8Cycle2() {
-	SPL := cpu.registers.P
-	e := cpu.registers.Temp8
+	SPL := cpu.Registers.P
+	e := cpu.Registers.Temp8
 	result := uint16(SPL) + uint16(e)
 
-	cpu.registers.SetFlagZ(false)
-	cpu.registers.SetFlagN(false)
+	cpu.Registers.SetFlagZ(false)
+	cpu.Registers.SetFlagN(false)
 	cpu.determineFlagH(SPL, e, false, false)
 	cpu.determineFlagC(SPL, e, false, false)
 
-	cpu.registers.L = uint8(result)
+	cpu.Registers.L = uint8(result)
 }
 
 func (cpu *CPU) signAdjust(val uint8) uint8 {
@@ -335,17 +335,17 @@ func (cpu *CPU) signAdjust(val uint8) uint8 {
 
 // LDHLSPPlusN8Cycle3 And this one
 func (cpu *CPU) LDHLSPPlusN8Cycle3() {
-	adj := cpu.signAdjust(cpu.registers.Temp8)
+	adj := cpu.signAdjust(cpu.Registers.Temp8)
 	carry := uint8(0)
-	if cpu.registers.FlagC() {
+	if cpu.Registers.FlagC() {
 		carry = 1
 	}
 
-	cpu.registers.H = cpu.registers.S + adj + carry
+	cpu.Registers.H = cpu.Registers.S + adj + carry
 }
 
 func (cpu *CPU) determineFlagZ(val byte) {
-	cpu.registers.SetFlagZ(val == 0)
+	cpu.Registers.SetFlagZ(val == 0)
 }
 
 func (cpu *CPU) determineFlags(op1, op2 byte, isSub, carry bool) {
@@ -363,17 +363,17 @@ func (cpu *CPU) determineFlags(op1, op2 byte, isSub, carry bool) {
 	}
 
 	cpu.determineFlagZ(res)
-	cpu.registers.SetFlagN(isSub)
+	cpu.Registers.SetFlagN(isSub)
 	cpu.determineFlagH(op1, op2, isSub, carry)
 	cpu.determineFlagC(op1, op2, isSub, carry)
 }
 
 func (cpu *CPU) addVal(val byte, carry bool) {
-	cpu.determineFlags(cpu.registers.A, val, false, carry)
+	cpu.determineFlags(cpu.Registers.A, val, false, carry)
 
-	cpu.registers.A += val
+	cpu.Registers.A += val
 	if carry {
-		cpu.registers.A++
+		cpu.Registers.A++
 	}
 }
 
@@ -389,16 +389,16 @@ func (cpu *CPU) adcR8(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		cpu.addVal(*r, cpu.registers.FlagC())
+		cpu.addVal(*r, cpu.Registers.FlagC())
 	}
 }
 
 func (cpu *CPU) subVal(val byte, carry bool) {
-	cpu.determineFlags(cpu.registers.A, val, true, carry)
+	cpu.determineFlags(cpu.Registers.A, val, true, carry)
 
-	cpu.registers.A -= val
+	cpu.Registers.A -= val
 	if carry {
-		cpu.registers.A--
+		cpu.Registers.A--
 	}
 }
 
@@ -414,7 +414,7 @@ func (cpu *CPU) sbcR8(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		cpu.subVal(*r, cpu.registers.FlagC())
+		cpu.subVal(*r, cpu.Registers.FlagC())
 	}
 }
 
@@ -422,9 +422,9 @@ func (cpu *CPU) cpR8(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		A := cpu.registers.A
+		A := cpu.Registers.A
 		cpu.subVal(*r, false)
-		cpu.registers.A = A
+		cpu.Registers.A = A
 	}
 }
 
@@ -433,7 +433,7 @@ func (cpu *CPU) incR8(rName byte) func() {
 
 	return func() {
 		cpu.determineFlagH(*r, 1, false, false)
-		cpu.registers.SetFlagN(false)
+		cpu.Registers.SetFlagN(false)
 
 		*r++
 		cpu.determineFlagZ(*r)
@@ -452,7 +452,7 @@ func (cpu *CPU) decR8(rName byte) func() {
 
 	return func() {
 		cpu.determineFlagH(*r, 1, true, false)
-		cpu.registers.SetFlagN(true)
+		cpu.Registers.SetFlagN(true)
 
 		*r--
 		cpu.determineFlagZ(*r)
@@ -468,12 +468,12 @@ func (cpu *CPU) andR8(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		cpu.registers.A &= *r
+		cpu.Registers.A &= *r
 
-		cpu.determineFlagZ(cpu.registers.A)
-		cpu.registers.SetFlagN(false)
-		cpu.registers.SetFlagH(true)
-		cpu.registers.SetFlagC(false)
+		cpu.determineFlagZ(cpu.Registers.A)
+		cpu.Registers.SetFlagN(false)
+		cpu.Registers.SetFlagH(true)
+		cpu.Registers.SetFlagC(false)
 	}
 }
 
@@ -481,12 +481,12 @@ func (cpu *CPU) orR8(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		cpu.registers.A |= *r
+		cpu.Registers.A |= *r
 
-		cpu.determineFlagZ(cpu.registers.A)
-		cpu.registers.SetFlagN(false)
-		cpu.registers.SetFlagH(false)
-		cpu.registers.SetFlagC(false)
+		cpu.determineFlagZ(cpu.Registers.A)
+		cpu.Registers.SetFlagN(false)
+		cpu.Registers.SetFlagH(false)
+		cpu.Registers.SetFlagC(false)
 	}
 }
 
@@ -494,72 +494,72 @@ func (cpu *CPU) xorR8(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		cpu.registers.A ^= *r
+		cpu.Registers.A ^= *r
 
-		cpu.determineFlagZ(cpu.registers.A)
-		cpu.registers.SetFlagN(false)
-		cpu.registers.SetFlagH(false)
-		cpu.registers.SetFlagC(false)
+		cpu.determineFlagZ(cpu.Registers.A)
+		cpu.Registers.SetFlagN(false)
+		cpu.Registers.SetFlagH(false)
+		cpu.Registers.SetFlagC(false)
 	}
 }
 
 func (cpu *CPU) ccf() {
-	cpu.registers.SetFlagN(false)
-	cpu.registers.SetFlagH(false)
-	cpu.registers.SetFlagC(!cpu.registers.FlagC())
+	cpu.Registers.SetFlagN(false)
+	cpu.Registers.SetFlagH(false)
+	cpu.Registers.SetFlagC(!cpu.Registers.FlagC())
 }
 
 func (cpu *CPU) scf() {
-	cpu.registers.SetFlagN(false)
-	cpu.registers.SetFlagH(false)
-	cpu.registers.SetFlagC(true)
+	cpu.Registers.SetFlagN(false)
+	cpu.Registers.SetFlagH(false)
+	cpu.Registers.SetFlagC(true)
 }
 
 func (cpu *CPU) daa() {
 	var offset uint8
 
-	if cpu.registers.FlagN() {
-		if cpu.registers.FlagH() {
+	if cpu.Registers.FlagN() {
+		if cpu.Registers.FlagH() {
 			offset += 0x06
 		}
-		if cpu.registers.FlagC() {
+		if cpu.Registers.FlagC() {
 			offset += 0x60
 		}
 
-		cpu.registers.A -= offset
+		cpu.Registers.A -= offset
 	} else {
-		A := cpu.registers.A
-		if cpu.registers.FlagH() || (A&0x0F) > 0x9 {
+		A := cpu.Registers.A
+		if cpu.Registers.FlagH() || (A&0x0F) > 0x9 {
 			offset += 0x06
 		}
-		if cpu.registers.FlagC() || A > 0x99 {
+		if cpu.Registers.FlagC() || A > 0x99 {
 			offset += 0x60
-			cpu.registers.SetFlagC(true)
+			cpu.Registers.SetFlagC(true)
 		}
 
-		cpu.registers.A += offset
+		cpu.Registers.A += offset
 	}
 
-	cpu.registers.SetFlagH(false)
-	cpu.determineFlagZ(cpu.registers.A)
+	cpu.Registers.SetFlagH(false)
+	cpu.determineFlagZ(cpu.Registers.A)
 }
 
 func (cpu *CPU) cpl() {
-	cpu.registers.A = ^cpu.registers.A
+	cpu.Registers.A = ^cpu.Registers.A
 
-	cpu.registers.SetFlagN(true)
-	cpu.registers.SetFlagH(true)
+	cpu.Registers.SetFlagN(true)
+	cpu.Registers.SetFlagH(true)
 }
 
 func (cpu *CPU) addR16LSB(rName byte) func() {
 	r := cpu.determine8Reg(rName)
 
 	return func() {
-		cpu.registers.SetFlagN(false)
-		cpu.determineFlagH(cpu.registers.L, *r, false, false)
-		cpu.determineFlagC(cpu.registers.L, *r, false, false)
+		cpu.Registers.SetFlagN(false)
+		cpu.determineFlagH(cpu.Registers.L, *r, false, false)
+		cpu.determineFlagC(cpu.Registers.L, *r, false, false)
 
-		cpu.registers.L += *r
+		cpu.Registers.L += *r
 	}
 }
 
@@ -568,32 +568,32 @@ func (cpu *CPU) addR16MSB(rName byte) func() {
 
 	return func() {
 		carry := byte(0)
-		if cpu.registers.FlagC() {
+		if cpu.Registers.FlagC() {
 			carry = 1
 		}
 
-		cpu.registers.SetFlagN(false)
-		cpu.determineFlagH(cpu.registers.H, *r, false, cpu.registers.FlagC())
-		cpu.determineFlagC(cpu.registers.H, *r, false, cpu.registers.FlagC())
+		cpu.Registers.SetFlagN(false)
+		cpu.determineFlagH(cpu.Registers.H, *r, false, cpu.Registers.FlagC())
+		cpu.determineFlagC(cpu.Registers.H, *r, false, cpu.Registers.FlagC())
 
-		cpu.registers.H += *r + carry
+		cpu.Registers.H += *r + carry
 	}
 }
 
 func (cpu *CPU) addSPN8Cycle2() {
-	cpu.registers.SetFlagZ(false)
-	cpu.registers.SetFlagN(false)
-	cpu.determineFlagH(cpu.registers.P, cpu.registers.Temp8, false, false)
-	cpu.determineFlagC(cpu.registers.P, cpu.registers.Temp8, false, false)
+	cpu.Registers.SetFlagZ(false)
+	cpu.Registers.SetFlagN(false)
+	cpu.determineFlagH(cpu.Registers.P, cpu.Registers.Temp8, false, false)
+	cpu.determineFlagC(cpu.Registers.P, cpu.Registers.Temp8, false, false)
 
-	cpu.registers.SetTemp16Lsb(cpu.registers.P + cpu.registers.Temp8)
+	cpu.Registers.SetTemp16Lsb(cpu.Registers.P + cpu.Registers.Temp8)
 }
 
 func (cpu *CPU) addSPN8Cycle3() {
-	res := cpu.registers.S + cpu.signAdjust(cpu.registers.Temp8)
-	if cpu.registers.FlagC() {
+	res := cpu.Registers.S + cpu.signAdjust(cpu.Registers.Temp8)
+	if cpu.Registers.FlagC() {
 		res++
 	}
 
-	cpu.registers.SetTemp16Msb(res)
+	cpu.Registers.SetTemp16Msb(res)
 }

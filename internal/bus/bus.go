@@ -12,9 +12,26 @@ type Bus struct {
 	RAM [ramSize]byte
 }
 
+type OutOfRange struct {
+	str string
+}
+
+func NewOutOfRange(addr uint16) OutOfRange {
+	return OutOfRange{
+		str: fmt.Sprintf(
+			"address %04X is out or memory range",
+			addr,
+		),
+	}
+}
+
+func (o OutOfRange) Error() string {
+	return o.str
+}
+
 func (b *Bus) Read(addr uint16) (byte, error) {
 	if int(addr) >= len(b.RAM) {
-		return 0, fmt.Errorf("address: %#x if out of memory range", addr)
+		return 0, NewOutOfRange(addr)
 	}
 
 	return b.RAM[addr], nil
@@ -22,7 +39,7 @@ func (b *Bus) Read(addr uint16) (byte, error) {
 
 func (b *Bus) Write(addr uint16, val byte) error {
 	if int(addr) >= len(b.RAM) {
-		return fmt.Errorf("address: %#x if out of memory range", addr)
+		return NewOutOfRange(addr)
 	}
 
 	b.RAM[addr] = val

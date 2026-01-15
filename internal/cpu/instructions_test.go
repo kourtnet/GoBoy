@@ -48,11 +48,11 @@ func Test_readAddr(t *testing.T) {
 
 	cpu := CPU{}
 	cpu.bus = busMock
-	cpu.registers = &registers{}
+	cpu.Registers = &Registers{}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			cpu.registers.Temp8 = 0
+			cpu.Registers.Temp8 = 0
 
 			cpu.readAddr(c.addr)
 
@@ -60,7 +60,7 @@ func Test_readAddr(t *testing.T) {
 				assert.Error(t, cpu.internalErr)
 			} else {
 				assert.NoError(t, cpu.internalErr)
-				assert.Equal(t, cpu.registers.Temp8, c.retVal)
+				assert.Equal(t, cpu.Registers.Temp8, c.retVal)
 			}
 		})
 	}
@@ -68,7 +68,7 @@ func Test_readAddr(t *testing.T) {
 
 func Test_determine8Reg(t *testing.T) {
 	cpu := CPU{}
-	cpu.registers = &registers{}
+	cpu.Registers = &Registers{}
 
 	cases := []struct {
 		name    byte
@@ -77,35 +77,35 @@ func Test_determine8Reg(t *testing.T) {
 	}{
 		{
 			name: 'A',
-			reg:  &cpu.registers.A,
+			reg:  &cpu.Registers.A,
 		},
 		{
 			name: 'B',
-			reg:  &cpu.registers.B,
+			reg:  &cpu.Registers.B,
 		},
 		{
 			name: 'D',
-			reg:  &cpu.registers.D,
+			reg:  &cpu.Registers.D,
 		},
 		{
 			name: 'H',
-			reg:  &cpu.registers.H,
+			reg:  &cpu.Registers.H,
 		},
 		{
 			name: 'C',
-			reg:  &cpu.registers.C,
+			reg:  &cpu.Registers.C,
 		},
 		{
 			name: 'E',
-			reg:  &cpu.registers.E,
+			reg:  &cpu.Registers.E,
 		},
 		{
 			name: 'L',
-			reg:  &cpu.registers.L,
+			reg:  &cpu.Registers.L,
 		},
 		{
 			name: 'T',
-			reg:  &cpu.registers.Temp8,
+			reg:  &cpu.Registers.Temp8,
 		},
 		{
 			name:    'U',
@@ -129,7 +129,7 @@ func Test_determine8Reg(t *testing.T) {
 
 func Test_determine16Reg(t *testing.T) {
 	cpu := CPU{}
-	cpu.registers = &registers{}
+	cpu.Registers = &Registers{}
 
 	cases := []struct {
 		name    string
@@ -138,31 +138,31 @@ func Test_determine16Reg(t *testing.T) {
 	}{
 		{
 			name: "AF",
-			reg:  cpu.registers.AF,
+			reg:  cpu.Registers.AF,
 		},
 		{
 			name: "BC",
-			reg:  cpu.registers.BC,
+			reg:  cpu.Registers.BC,
 		},
 		{
 			name: "DE",
-			reg:  cpu.registers.DE,
+			reg:  cpu.Registers.DE,
 		},
 		{
 			name: "HL",
-			reg:  cpu.registers.HL,
+			reg:  cpu.Registers.HL,
 		},
 		{
 			name: "PC",
-			reg:  cpu.registers.PC,
+			reg:  cpu.Registers.PC,
 		},
 		{
 			name: "SP",
-			reg:  cpu.registers.SP,
+			reg:  cpu.Registers.SP,
 		},
 		{
 			name: "Temp16",
-			reg:  cpu.registers.Temp16,
+			reg:  cpu.Registers.Temp16,
 		},
 		{
 			name:    "Invalid Address",
@@ -170,17 +170,17 @@ func Test_determine16Reg(t *testing.T) {
 		},
 	}
 
-	cpu.registers.A = 0x11
-	cpu.registers.F = 0x22
-	cpu.registers.B = 0x33
-	cpu.registers.C = 0x44
-	cpu.registers.D = 0x55
-	cpu.registers.E = 0x66
-	cpu.registers.H = 0x77
-	cpu.registers.L = 0x88
-	cpu.registers.pc = 0x9999
-	cpu.registers.S = 0xAA
-	cpu.registers.P = 0xAA
+	cpu.Registers.A = 0x11
+	cpu.Registers.F = 0x22
+	cpu.Registers.B = 0x33
+	cpu.Registers.C = 0x44
+	cpu.Registers.D = 0x55
+	cpu.Registers.E = 0x66
+	cpu.Registers.H = 0x77
+	cpu.Registers.L = 0x88
+	cpu.Registers.pc = 0x9999
+	cpu.Registers.S = 0xAA
+	cpu.Registers.P = 0xAA
 
 	for _, c := range cases {
 		t.Run(string(c.name)+" register", func(t *testing.T) {
@@ -200,7 +200,7 @@ func Test_determine16Reg(t *testing.T) {
 
 func Test_determine16RegSetter(t *testing.T) {
 	cpu := CPU{}
-	cpu.registers = &registers{}
+	cpu.Registers = &Registers{}
 
 	cases := []struct {
 		name    string
@@ -209,23 +209,23 @@ func Test_determine16RegSetter(t *testing.T) {
 	}{
 		{
 			name: "AF",
-			reg:  cpu.registers.AF,
+			reg:  cpu.Registers.AF,
 		},
 		{
 			name: "BC",
-			reg:  cpu.registers.BC,
+			reg:  cpu.Registers.BC,
 		},
 		{
 			name: "DE",
-			reg:  cpu.registers.DE,
+			reg:  cpu.Registers.DE,
 		},
 		{
 			name: "HL",
-			reg:  cpu.registers.HL,
+			reg:  cpu.Registers.HL,
 		},
 		{
 			name: "SP",
-			reg:  cpu.registers.SP,
+			reg:  cpu.Registers.SP,
 		},
 		{
 			name:    "Invalid Address",
@@ -259,7 +259,7 @@ func Test_determine16RegSetter(t *testing.T) {
 
 func Test_determine16RegINC_DEC(t *testing.T) {
 	cpu := CPU{}
-	cpu.registers = &registers{}
+	cpu.Registers = &Registers{}
 
 	cases := []struct {
 		name    string
@@ -268,19 +268,19 @@ func Test_determine16RegINC_DEC(t *testing.T) {
 	}{
 		{
 			name: "BC",
-			reg:  cpu.registers.BC,
+			reg:  cpu.Registers.BC,
 		},
 		{
 			name: "DE",
-			reg:  cpu.registers.DE,
+			reg:  cpu.Registers.DE,
 		},
 		{
 			name: "HL",
-			reg:  cpu.registers.HL,
+			reg:  cpu.Registers.HL,
 		},
 		{
 			name: "SP",
-			reg:  cpu.registers.SP,
+			reg:  cpu.Registers.SP,
 		},
 		{
 			name:    "Invalid Address",

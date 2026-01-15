@@ -61,13 +61,13 @@ func (b *suiteBus) Write(addr uint16, val byte) error {
 }
 
 type snapshot struct {
-	regs   registers
+	regs   Registers
 	memory []byte
 }
 
 func newSnapshot(A, F, B, C, D, E, H, L byte, PC, SP uint16, memory []byte) snapshot {
 	snap := snapshot{
-		regs: registers{
+		regs: Registers{
 			A:  A,
 			F:  F,
 			B:  B,
@@ -86,11 +86,11 @@ func newSnapshot(A, F, B, C, D, E, H, L byte, PC, SP uint16, memory []byte) snap
 }
 
 func (s *snapshot) Equal(cpu CPU, bus *suiteBus) bool {
-	s.regs.Temp8 = cpu.registers.Temp8
-	s.regs.temp16 = cpu.registers.temp16
-	s.regs.IR = cpu.registers.IR
+	s.regs.Temp8 = cpu.Registers.Temp8
+	s.regs.temp16 = cpu.Registers.temp16
+	s.regs.IR = cpu.Registers.IR
 
-	if *cpu.registers != s.regs {
+	if *cpu.Registers != s.regs {
 		return false
 	}
 
@@ -216,17 +216,17 @@ func NewTestSuite(ROMPath, SnapPath string) (*testSuite, error) {
 	}
 
 	// TODO: ???
-	cpu.registers.A = snaps[0].regs.A
-	cpu.registers.F = snaps[0].regs.F
-	cpu.registers.B = snaps[0].regs.B
-	cpu.registers.C = snaps[0].regs.C
-	cpu.registers.D = snaps[0].regs.D
-	cpu.registers.E = snaps[0].regs.E
-	cpu.registers.H = snaps[0].regs.H
-	cpu.registers.L = snaps[0].regs.L
-	cpu.registers.pc = snaps[0].regs.pc
-	cpu.registers.S = snaps[0].regs.S
-	cpu.registers.P = snaps[0].regs.P
+	cpu.Registers.A = snaps[0].regs.A
+	cpu.Registers.F = snaps[0].regs.F
+	cpu.Registers.B = snaps[0].regs.B
+	cpu.Registers.C = snaps[0].regs.C
+	cpu.Registers.D = snaps[0].regs.D
+	cpu.Registers.E = snaps[0].regs.E
+	cpu.Registers.H = snaps[0].regs.H
+	cpu.Registers.L = snaps[0].regs.L
+	cpu.Registers.pc = snaps[0].regs.pc
+	cpu.Registers.S = snaps[0].regs.S
+	cpu.Registers.P = snaps[0].regs.P
 
 	suite := &testSuite{
 		cpu:   cpu,
@@ -255,15 +255,15 @@ func (s *testSuite) step() bool {
 
 	if !eq {
 		errFormat := `data mismatch at step %d (0x%x)
-	cpu registers:   %v
-	suite registers: %v
+	cpu Registers:   %v
+	suite Registers: %v
 	bus memory:  %v
 	snap memory: %v`
 
 		s.err = fmt.Errorf(errFormat,
 			s.stepNum,
 			s.stepNum,
-			*s.cpu.registers,
+			*s.cpu.Registers,
 			s.snaps[s.stepNum].regs,
 			s.bus.memory[:memSizeInBytes],
 			s.snaps[s.stepNum].memory)

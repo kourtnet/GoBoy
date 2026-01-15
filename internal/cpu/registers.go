@@ -9,7 +9,7 @@ const (
 	flagC uint8 = 0b00010000
 )
 
-type registers struct {
+type Registers struct {
 	IR byte
 	A  byte
 	F  byte
@@ -28,7 +28,7 @@ type registers struct {
 	temp16 uint16
 }
 
-func (r *registers) String() string {
+func (r *Registers) String() string {
 	var res string
 
 	res += fmt.Sprintf("IR: %#x ", r.IR)
@@ -46,132 +46,132 @@ func (r *registers) String() string {
 	return res
 }
 
-func (r *registers) r8R8ToR16(r1, r2 byte) uint16 {
+func (r *Registers) r8R8ToR16(r1, r2 byte) uint16 {
 	return uint16(r1)<<8 + uint16(r2)
 }
 
-func (r *registers) r16Msb(reg uint16) byte {
+func (r *Registers) r16Msb(reg uint16) byte {
 	return byte(reg >> 8)
 }
 
-func (r *registers) r16Lsb(reg uint16) byte {
+func (r *Registers) r16Lsb(reg uint16) byte {
 	return byte(reg & 0x00FF)
 }
 
-func (r *registers) AF() uint16 {
+func (r *Registers) AF() uint16 {
 	return r.r8R8ToR16(r.A, r.F)
 }
 
-func (r *registers) SetAF(val uint16) {
+func (r *Registers) SetAF(val uint16) {
 	r.A = r.r16Msb(val)
 	r.F = r.r16Lsb(val)
 }
 
-func (r *registers) BC() uint16 {
+func (r *Registers) BC() uint16 {
 	return r.r8R8ToR16(r.B, r.C)
 }
 
-func (r *registers) IncBC() {
+func (r *Registers) IncBC() {
 	BC := r.BC()
 	BC++
 
 	r.SetBC(BC)
 }
 
-func (r *registers) DecBC() {
+func (r *Registers) DecBC() {
 	BC := r.BC()
 	BC--
 
 	r.SetBC(BC)
 }
 
-func (r *registers) SetBC(val uint16) {
+func (r *Registers) SetBC(val uint16) {
 	r.B = r.r16Msb(val)
 	r.C = r.r16Lsb(val)
 }
 
-func (r *registers) DE() uint16 {
+func (r *Registers) DE() uint16 {
 	return r.r8R8ToR16(r.D, r.E)
 }
 
-func (r *registers) IncDE() {
+func (r *Registers) IncDE() {
 	DE := r.DE()
 	DE++
 
 	r.SetDE(DE)
 }
 
-func (r *registers) DecDE() {
+func (r *Registers) DecDE() {
 	DE := r.DE()
 	DE--
 
 	r.SetDE(DE)
 }
 
-func (r *registers) SetDE(val uint16) {
+func (r *Registers) SetDE(val uint16) {
 	r.D = r.r16Msb(val)
 	r.E = r.r16Lsb(val)
 }
 
-func (r *registers) HL() uint16 {
+func (r *Registers) HL() uint16 {
 	return r.r8R8ToR16(r.H, r.L)
 }
 
-func (r *registers) SetHL(val uint16) {
+func (r *Registers) SetHL(val uint16) {
 	r.H = r.r16Msb(val)
 	r.L = r.r16Lsb(val)
 }
 
-func (r *registers) IncHL() {
+func (r *Registers) IncHL() {
 	HL := r.HL()
 	HL++
 
 	r.SetHL(HL)
 }
 
-func (r *registers) DecHL() {
+func (r *Registers) DecHL() {
 	HL := r.HL()
 	HL--
 
 	r.SetHL(HL)
 }
 
-func (r *registers) PC() uint16 {
+func (r *Registers) PC() uint16 {
 	return r.pc
 }
 
-func (r *registers) SP() uint16 {
+func (r *Registers) SP() uint16 {
 	return r.r8R8ToR16(r.S, r.P)
 }
 
-func (r *registers) SetSP(val uint16) {
+func (r *Registers) SetSP(val uint16) {
 	r.S = r.r16Msb(val)
 	r.P = r.r16Lsb(val)
 }
 
-func (r *registers) IncSP() {
+func (r *Registers) IncSP() {
 	SP := r.SP()
 	SP++
 
 	r.SetSP(SP)
 }
 
-func (r *registers) DecSP() {
+func (r *Registers) DecSP() {
 	SP := r.SP()
 	SP--
 
 	r.SetSP(SP)
 }
 
-func (r *registers) Temp16() uint16 {
+func (r *Registers) Temp16() uint16 {
 	return r.temp16
 }
 
-func (r *registers) IncPC() {
+func (r *Registers) IncPC() {
 	r.pc++
 }
 
-func (r *registers) setFlag(mask uint8, val bool) {
+func (r *Registers) setFlag(mask uint8, val bool) {
 	if val {
 		r.F |= mask
 	} else {
@@ -179,48 +179,48 @@ func (r *registers) setFlag(mask uint8, val bool) {
 	}
 }
 
-func (r *registers) getFlag(mask uint8) bool {
+func (r *Registers) getFlag(mask uint8) bool {
 	return (r.F & mask) != 0
 }
 
-func (r *registers) SetFlagZ(val bool) {
+func (r *Registers) SetFlagZ(val bool) {
 	r.setFlag(flagZ, val)
 }
 
-func (r *registers) FlagZ() bool {
+func (r *Registers) FlagZ() bool {
 	return r.getFlag(flagZ)
 }
 
-func (r *registers) SetFlagN(val bool) {
+func (r *Registers) SetFlagN(val bool) {
 	r.setFlag(flagN, val)
 }
 
-func (r *registers) FlagN() bool {
+func (r *Registers) FlagN() bool {
 	return r.getFlag(flagN)
 }
 
-func (r *registers) SetFlagH(val bool) {
+func (r *Registers) SetFlagH(val bool) {
 	r.setFlag(flagH, val)
 }
 
-func (r *registers) FlagH() bool {
+func (r *Registers) FlagH() bool {
 	return r.getFlag(flagH)
 }
 
-func (r *registers) SetFlagC(val bool) {
+func (r *Registers) SetFlagC(val bool) {
 	r.setFlag(flagC, val)
 }
 
-func (r *registers) FlagC() bool {
+func (r *Registers) FlagC() bool {
 	return r.getFlag(flagC)
 }
 
-func (r *registers) SetTemp16Msb(v byte) {
+func (r *Registers) SetTemp16Msb(v byte) {
 	r.temp16 = r.r8R8ToR16(v, r.r16Lsb(r.temp16))
 }
 
 // Lsb set also clears prev tempAddr value and writes FF into Msb
 // it is required for indirect addresses where Msb part is always FF
-func (r *registers) SetTemp16Lsb(v byte) {
+func (r *Registers) SetTemp16Lsb(v byte) {
 	r.temp16 = r.r8R8ToR16(0xFF, v)
 }
