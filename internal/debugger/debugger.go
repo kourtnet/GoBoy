@@ -4,6 +4,7 @@ package debugger
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,14 +13,28 @@ import (
 )
 
 const (
-	entriesOnScreen = 16
-	entryFormat     = "%02X    %02X\t  %-10s%s"
-	entryWidth      = 50
+	entriesOnScreen     = 16
+	memoryLinesOnScreen = 8
+	entryFormat         = "%02X    %02X\t  %-10s%s"
+	entryWidth          = 50
+	registerWidth       = 11
+
+	height = 1 + entriesOnScreen + 1 + memoryLinesOnScreen + 1
+	width  = 1 + entryWidth + 1 + registerWidth + 1
 )
 
 var (
-	entriesBlankField  = strings.Repeat(strings.Repeat(" ", entryWidth)+"\n", entriesOnScreen)
-	entriesFieldReturn = "\r\033[16A"
+	hideCursor = "\033[?25l"
+	blankField = strings.Repeat(strings.Repeat(" ", width)+"\n", height) + "\r\033[" + strconv.Itoa(height+1) + "A"
+	borders    = ("╔" + strings.Repeat("═", entryWidth) + "╦" + strings.Repeat("═", registerWidth) + "╗\n" +
+		strings.Repeat("║"+strings.Repeat(" ", entryWidth)+"│"+strings.Repeat(" ", registerWidth)+"║\n", entriesOnScreen) +
+		"╠" + strings.Repeat("─", entryWidth) + "┼" + strings.Repeat("─", registerWidth) + "╣\n" +
+		strings.Repeat("║"+strings.Repeat(" ", entryWidth)+"│"+strings.Repeat(" ", registerWidth)+"║\n", memoryLinesOnScreen) +
+		"╚" + strings.Repeat("═", entryWidth) + "╩" + strings.Repeat("═", registerWidth) + "╝\n\r\033[" + strconv.Itoa(height+1) +
+		"A")
+	entriesBlankField = strings.Repeat(entriesOffset+strings.Repeat(" ", entryWidth), entriesOnScreen)
+	entriesReturn     = "\r\033[" + strconv.Itoa(entriesOnScreen) + "A"
+	entriesOffset     = "\r\033[1C\033[1B"
 )
 
 type entry struct {
@@ -151,20 +166,21 @@ func (deb *Debugger) newEntryStr() (string, error) {
 }
 
 func (deb *Debugger) printData() {
-	fmt.Print(entriesFieldReturn)
-	fmt.Print(entriesBlankField)
-	fmt.Print(entriesFieldReturn)
+	fmt.Print(entriesBlankField + entriesReturn)
 
 	entry := deb.entriesTail
 	for entry != nil {
-		fmt.Println(entry.str)
+		fmt.Print(entriesOffset + entry.str)
 		entry = entry.next
 	}
+	fmt.Print(entriesReturn)
 	time.Sleep(time.Second * 1)
 }
 
 func (deb *Debugger) firstPrint() {
-	fmt.Print(entriesBlankField)
+	fmt.Print(hideCursor)
+	fmt.Println(blankField)
+	fmt.Println(borders)
 }
 
 func (deb *Debugger) Step() (bool, error) {
