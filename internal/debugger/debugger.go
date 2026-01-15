@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/kourtnet/GoBoy/internal/bus"
 	"github.com/kourtnet/GoBoy/internal/cpu"
@@ -13,6 +14,12 @@ import (
 const (
 	entriesOnScreen = 16
 	entryFormat     = "%02X    %02X\t  %-10s%s"
+	entryWidth      = 50
+)
+
+var (
+	entriesBlankField  = strings.Repeat(strings.Repeat(" ", entryWidth)+"\n", entriesOnScreen)
+	entriesFieldReturn = "\r\033[16A"
 )
 
 type entry struct {
@@ -24,23 +31,32 @@ type Debugger struct {
 	cpu *cpu.CPU
 	bus *bus.Bus
 
+	// Required to check which cpu parameters have
+	// changed after the Step()
+	regs cpu.Registers
+
 	instructions        [instructionsNum]instruction
 	entriesTail         *entry
 	entriesHead         *entry
 	entriesNum          int
 	nextInstructionAddr uint16
+	isNotFirstStep      bool
 }
 
 func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
 	deb := Debugger{
-		cpu: cpu,
-		bus: b,
+		cpu:  cpu,
+		bus:  b,
+		regs: *cpu.Registers,
 	}
+
+	// Invalid opcode. Required for first step proper processing
+	deb.regs.IR = 0xD3
 
 	deb.initInstructions()
 	deb.nextInstructionAddr = deb.cpu.Registers.PC()
 
-	for range entriesOnScreen {
+	for deb.entriesNum < entriesOnScreen {
 		err := deb.newEntry()
 		if err != nil {
 			var ourErr bus.OutOfRange
@@ -63,8 +79,10 @@ func (deb *Debugger) newEntry() error {
 
 	ent := &entry{str: str}
 	if deb.entriesTail == nil {
-		deb.entriesTail = ent
+		// dummy for first call
+		deb.entriesTail = &entry{next: ent}
 		deb.entriesHead = ent
+		deb.entriesNum = 2
 		return nil
 	}
 
@@ -73,9 +91,9 @@ func (deb *Debugger) newEntry() error {
 
 	if deb.entriesNum >= entriesOnScreen {
 		deb.entriesTail = deb.entriesTail.next
+	} else {
+		deb.entriesNum++
 	}
-
-	deb.entriesNum++
 
 	return nil
 }
@@ -132,10 +150,40 @@ func (deb *Debugger) newEntryStr() (string, error) {
 	return str, nil
 }
 
-func (deb *Debugger) PrintData() {
+func (deb *Debugger) printData() {
+	fmt.Print(entriesFieldReturn)
+	fmt.Print(entriesBlankField)
+	fmt.Print(entriesFieldReturn)
+
 	entry := deb.entriesTail
 	for entry != nil {
 		fmt.Println(entry.str)
 		entry = entry.next
 	}
+	time.Sleep(time.Second * 1)
+}
+
+func (deb *Debugger) firstPrint() {
+	fmt.Print(entriesBlankField)
+}
+
+func (deb *Debugger) Step() (bool, error) {
+	if !deb.isNotFirstStep {
+		deb.firstPrint()
+		deb.isNotFirstStep = true
+	}
+
+	cpuEnd, err := deb.cpu.Step()
+	if err != nil {
+		return cpuEnd, err
+	}
+
+	// Checking if new instruction has been read
+	if deb.cpu.ReadNewInstruction {
+		deb.newEntry()
+		deb.printData()
+		deb.regs = *deb.cpu.Registers
+	}
+
+	return cpuEnd, nil
 }

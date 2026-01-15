@@ -19,6 +19,8 @@ type CPU struct {
 	// and process later in the Step().
 	internalErr error
 
+	ReadNewInstruction bool
+
 	Registers *Registers
 	bus       iBus
 }
@@ -61,11 +63,13 @@ func (cpu *CPU) fetchOpcode() error {
 	}
 
 	cpu.Registers.IncPC()
+	cpu.ReadNewInstruction = true
 
 	return nil
 }
 
 func (cpu *CPU) execute() {
+	cpu.ReadNewInstruction = false
 	cpu.instructions[cpu.Registers.IR][cpu.opNum]()
 	cpu.opNum++
 }
@@ -86,9 +90,9 @@ func (cpu *CPU) Step() (bool, error) {
 	}
 
 	// TODO: write a debugger instead of this
-	//	fmt.Printf("Regs:\n%s\n", cpu.Registers)
-	//	fmt.Println("16-bit regs:")
-	//	fmt.Printf("AF: %#x BC: %#x DE: %#x HL: %#x\n", cpu.Registers.AF(), cpu.Registers.BC(), cpu.Registers.DE(), cpu.Registers.HL())
+	// fmt.Printf("Regs:\n%s\n", cpu.Registers)
+	// fmt.Println("16-bit regs:")
+	// fmt.Printf("AF: %#x BC: %#x DE: %#x HL: %#x\n", cpu.Registers.AF(), cpu.Registers.BC(), cpu.Registers.DE(), cpu.Registers.HL())
 
 	return false, nil
 }

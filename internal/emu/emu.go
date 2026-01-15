@@ -2,8 +2,6 @@
 package emu
 
 import (
-	"time"
-
 	"github.com/kourtnet/GoBoy/internal/bus"
 	"github.com/kourtnet/GoBoy/internal/cpu"
 	"github.com/kourtnet/GoBoy/internal/debugger"
@@ -34,13 +32,14 @@ func Run() {
 		die.Die(err.Error())
 	}
 
+	var stepper stepper
+	stepper = deb
+
 	var cpuEnd bool
 
 	// WARNING: remove later
 	for err == nil && !cpuEnd {
-		deb.PrintData()
-		time.Sleep(time.Hour)
-		cpuEnd, err = cpu.Step()
+		cpuEnd, err = stepper.Step()
 	}
 
 	if err != nil {
