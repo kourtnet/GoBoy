@@ -18,20 +18,53 @@ const (
 	entryFormat         = "%02X    %02X\t  %-10s%s"
 	entryWidth          = 50
 	registerWidth       = 11
+	flagWidth           = 4
+	stackWidth          = 11
+	memoryWidth         = width - stackWidth - 3
 
 	height = 1 + entriesOnScreen + 1 + memoryLinesOnScreen + 1
-	width  = 1 + entryWidth + 1 + registerWidth + 1
+	width  = 1 + entryWidth + 1 + registerWidth + 1 + flagWidth + 1
+
+	instructionsLabel = "Instructions"
+	registersLabel    = "Registers"
+	flagsLabel        = "Fl"
+	memoryLabel       = "Memory"
+	stackLabel        = "Stck"
 )
 
 var (
 	hideCursor = "\033[?25l"
+
 	blankField = strings.Repeat(strings.Repeat(" ", width)+"\n", height) + "\r\033[" + strconv.Itoa(height+1) + "A"
-	borders    = ("╔" + strings.Repeat("═", entryWidth) + "╦" + strings.Repeat("═", registerWidth) + "╗\n" +
-		strings.Repeat("║"+strings.Repeat(" ", entryWidth)+"│"+strings.Repeat(" ", registerWidth)+"║\n", entriesOnScreen) +
-		"╠" + strings.Repeat("─", entryWidth) + "┼" + strings.Repeat("─", registerWidth) + "╣\n" +
-		strings.Repeat("║"+strings.Repeat(" ", entryWidth)+"│"+strings.Repeat(" ", registerWidth)+"║\n", memoryLinesOnScreen) +
-		"╚" + strings.Repeat("═", entryWidth) + "╩" + strings.Repeat("═", registerWidth) + "╝\n\r\033[" + strconv.Itoa(height+1) +
-		"A")
+
+	topBorder = ("╔═" + colorizeStr(instructionsLabel, "red") +
+		strings.Repeat("═", entryWidth-1-len(instructionsLabel)) +
+		"╦═" + colorizeStr(registersLabel, "yellow") +
+		strings.Repeat("═", registerWidth-1-len(registersLabel)) +
+		"╦═" + colorizeStr(flagsLabel, "blue") +
+		strings.Repeat("═", flagWidth-1-len(flagsLabel)) +
+		"╗\n")
+
+	topSideBorders = strings.Repeat("║"+"\033["+strconv.Itoa(entryWidth)+
+		"C│\033["+strconv.Itoa(registerWidth)+"C│\033["+
+		strconv.Itoa(flagWidth)+"C║\n", entriesOnScreen)
+
+	middleBorder = ("╠─" + colorizeStr(memoryLabel, "green") +
+		strings.Repeat("─", entryWidth-1-len(memoryLabel)) +
+		"┴" + strings.Repeat("─", memoryWidth-1-entryWidth) +
+		"┬─" + colorizeStr(stackLabel, "purple") +
+		strings.Repeat("─", stackWidth-2-flagWidth-len(stackLabel)) +
+		"┴" + strings.Repeat("─", flagWidth) + "╣\n")
+
+	bottomSideBorders = strings.Repeat("║"+
+		strings.Repeat(" ", memoryWidth)+
+		"│"+strings.Repeat(" ", registerWidth)+
+		"║\n", memoryLinesOnScreen)
+
+	bottomBorder = ("╚" + strings.Repeat("═", memoryWidth) + "╩" +
+		strings.Repeat("═", stackWidth) + "╝\n\r\033[" +
+		strconv.Itoa(height+1)) + "A"
+
 	entriesBlankField = strings.Repeat(entriesOffset+strings.Repeat(" ", entryWidth), entriesOnScreen)
 	entriesReturn     = "\r\033[" + strconv.Itoa(entriesOnScreen) + "A"
 	entriesOffset     = "\r\033[1C\033[1B"
@@ -56,6 +89,27 @@ type Debugger struct {
 	entriesNum          int
 	nextInstructionAddr uint16
 	isNotFirstStep      bool
+}
+
+func colorizeStr(str, color string) string {
+	var colorStr string
+
+	switch color {
+	case "red":
+		colorStr = "31"
+	case "green":
+		colorStr = "32"
+	case "yellow":
+		colorStr = "33"
+	case "blue":
+		colorStr = "34"
+	case "purple":
+		colorStr = "35"
+	default:
+		colorStr = "30"
+	}
+
+	return fmt.Sprintf("\033[%sm%s\033[0m", colorStr, str)
 }
 
 func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
@@ -174,13 +228,20 @@ func (deb *Debugger) printData() {
 		entry = entry.next
 	}
 	fmt.Print(entriesReturn)
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Hour)
 }
 
 func (deb *Debugger) firstPrint() {
 	fmt.Print(hideCursor)
 	fmt.Println(blankField)
-	fmt.Println(borders)
+
+	fmt.Println(
+		topBorder +
+			topSideBorders +
+			middleBorder +
+			bottomSideBorders +
+			bottomBorder,
+	)
 }
 
 func (deb *Debugger) Step() (bool, error) {
