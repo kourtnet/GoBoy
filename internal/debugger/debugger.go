@@ -14,6 +14,7 @@ import (
 
 const (
 	entriesOnScreen     = 16
+	regsNum             = 10
 	memoryLinesOnScreen = 8
 	entryFormat         = "%02X    %02X\t  %-10s%s"
 	entryWidth          = 50
@@ -68,6 +69,8 @@ var (
 	entriesBlankField = strings.Repeat(entriesOffset+strings.Repeat(" ", entryWidth), entriesOnScreen)
 	entriesReturn     = "\r\033[" + strconv.Itoa(entriesOnScreen) + "A"
 	entriesOffset     = "\r\033[1C\033[1B"
+	regsOffset        = "\r\033[" + strconv.Itoa(3+entryWidth) + "C\033[1B"
+	regsReturn        = "\r\033[" + strconv.Itoa(regsNum) + "A"
 )
 
 type entry struct {
@@ -219,18 +222,6 @@ func (deb *Debugger) newEntryStr() (string, error) {
 	return str, nil
 }
 
-func (deb *Debugger) printData() {
-	fmt.Print(entriesBlankField + entriesReturn)
-
-	entry := deb.entriesTail
-	for entry != nil {
-		fmt.Print(entriesOffset + entry.str)
-		entry = entry.next
-	}
-	fmt.Print(entriesReturn)
-	time.Sleep(time.Hour)
-}
-
 func (deb *Debugger) firstPrint() {
 	fmt.Print(hideCursor)
 	fmt.Println(blankField)
@@ -242,6 +233,40 @@ func (deb *Debugger) firstPrint() {
 			bottomSideBorders +
 			bottomBorder,
 	)
+}
+
+func (deb *Debugger) printData() {
+	deb.printEntries()
+	deb.printRegs()
+
+	time.Sleep(time.Second)
+}
+
+func (deb *Debugger) printEntries() {
+	fmt.Print(entriesBlankField + entriesReturn)
+
+	entry := deb.entriesTail
+	for entry != nil {
+		fmt.Print(entriesOffset + entry.str)
+		entry = entry.next
+	}
+	fmt.Print(entriesReturn)
+}
+
+func (deb *Debugger) printRegs() {
+	fmt.Print(regsOffset)
+	fmt.Printf(" a = %02X%s", deb.regs.A, regsOffset)
+	fmt.Printf(" f = %02X%s", deb.regs.F, regsOffset)
+	fmt.Printf(" b = %02X%s", deb.regs.B, regsOffset)
+	fmt.Printf(" c = %02X%s", deb.regs.C, regsOffset)
+	fmt.Printf(" d = %02X%s", deb.regs.D, regsOffset)
+	fmt.Printf(" e = %02X%s", deb.regs.E, regsOffset)
+	fmt.Printf(" h = %02X%s", deb.regs.H, regsOffset)
+	fmt.Printf(" l = %02X%s", deb.regs.L, regsOffset)
+	fmt.Printf("pc = %04X%s", deb.regs.PC(), regsOffset)
+	fmt.Printf("sp = %04X", deb.regs.SP())
+
+	fmt.Print(regsReturn)
 }
 
 func (deb *Debugger) Step() (bool, error) {
@@ -258,8 +283,8 @@ func (deb *Debugger) Step() (bool, error) {
 	// Checking if new instruction has been read
 	if deb.cpu.ReadNewInstruction {
 		deb.newEntry()
-		deb.printData()
 		deb.regs = *deb.cpu.Registers
+		deb.printData()
 	}
 
 	return cpuEnd, nil
