@@ -15,23 +15,30 @@ import (
 const (
 	entriesOnScreen     = 16
 	regsNum             = 10
+	flagsNum            = 4
 	memoryLinesOnScreen = 8
 	entryFormat         = "%02X    %02X\t  %-10s%s"
 	entryWidth          = 50
-	registerWidth       = 11
-	flagWidth           = 4
+	regWidth            = 11
+	flagWidth           = 5
 	stackWidth          = 11
 	memoryWidth         = width - stackWidth - 3
 
 	height = 1 + entriesOnScreen + 1 + memoryLinesOnScreen + 1
-	width  = 1 + entryWidth + 1 + registerWidth + 1 + flagWidth + 1
+	width  = 1 + entryWidth + 1 + regWidth + 1 + flagWidth + 1
 
 	instructionsLabel = "Instructions"
 	registersLabel    = "Registers"
-	flagsLabel        = "Fl"
+	flagsLabel        = "Flg"
 	memoryLabel       = "Memory"
 	stackLabel        = "Stck"
 )
+
+// a little helper for printing flags
+var boolNum = map[bool]int{
+	true:  1,
+	false: 0,
+}
 
 var (
 	hideCursor = "\033[?25l"
@@ -41,13 +48,13 @@ var (
 	topBorder = ("╔═" + colorizeStr(instructionsLabel, "red") +
 		strings.Repeat("═", entryWidth-1-len(instructionsLabel)) +
 		"╦═" + colorizeStr(registersLabel, "yellow") +
-		strings.Repeat("═", registerWidth-1-len(registersLabel)) +
+		strings.Repeat("═", regWidth-1-len(registersLabel)) +
 		"╦═" + colorizeStr(flagsLabel, "blue") +
 		strings.Repeat("═", flagWidth-1-len(flagsLabel)) +
 		"╗\n")
 
 	topSideBorders = strings.Repeat("║"+"\033["+strconv.Itoa(entryWidth)+
-		"C│\033["+strconv.Itoa(registerWidth)+"C│\033["+
+		"C│\033["+strconv.Itoa(regWidth)+"C│\033["+
 		strconv.Itoa(flagWidth)+"C║\n", entriesOnScreen)
 
 	middleBorder = ("╠─" + colorizeStr(memoryLabel, "green") +
@@ -59,7 +66,7 @@ var (
 
 	bottomSideBorders = strings.Repeat("║"+
 		strings.Repeat(" ", memoryWidth)+
-		"│"+strings.Repeat(" ", registerWidth)+
+		"│"+strings.Repeat(" ", regWidth)+
 		"║\n", memoryLinesOnScreen)
 
 	bottomBorder = ("╚" + strings.Repeat("═", memoryWidth) + "╩" +
@@ -71,11 +78,34 @@ var (
 	entriesOffset     = "\r\033[1C\033[1B"
 	regsOffset        = "\r\033[" + strconv.Itoa(3+entryWidth) + "C\033[1B"
 	regsReturn        = "\r\033[" + strconv.Itoa(regsNum) + "A"
+	flagsOffset       = "\r\033[" + strconv.Itoa(4+entryWidth+regWidth) + "C\033[1B"
+	flagsReturn       = "\r\033[" + strconv.Itoa(flagsNum) + "A"
 )
 
 type entry struct {
 	str  string
 	next *entry
+}
+
+// struct required for easier registers compare
+type reg8Pair struct {
+	debReg *byte
+	cpuReg *byte
+	name   string
+}
+
+func (d *reg8Pair) compare() bool {
+	return *d.cpuReg != *d.debReg
+}
+
+type dataPair[T comparable] struct {
+	debReg func() T
+	cpuReg func() T
+	name   string
+}
+
+func (d *dataPair[T]) compare() bool {
+	return d.cpuReg() != d.debReg()
 }
 
 type Debugger struct {
@@ -84,7 +114,10 @@ type Debugger struct {
 
 	// Required to check which cpu parameters have
 	// changed after the Step()
-	regs cpu.Registers
+	regs       cpu.Registers
+	reg8Pairs  [8]reg8Pair
+	reg16Pairs [2]dataPair[uint16]
+	flagPairs  [4]dataPair[bool]
 
 	instructions        [instructionsNum]instruction
 	entriesTail         *entry
@@ -122,11 +155,7 @@ func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
 		regs: *cpu.Registers,
 	}
 
-	// Invalid opcode. Required for first step proper processing
-	deb.regs.IR = 0xD3
-
-	deb.initInstructions()
-	deb.nextInstructionAddr = deb.cpu.Registers.PC()
+	deb.initCPU()
 
 	for deb.entriesNum < entriesOnScreen {
 		err := deb.newEntry()
@@ -141,6 +170,31 @@ func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
 	}
 
 	return &deb, nil
+}
+
+func (deb *Debugger) initCPU() {
+	// Invalid opcode. Required for first step proper processing
+	deb.regs.IR = 0xD3
+
+	deb.initInstructions()
+	deb.nextInstructionAddr = deb.cpu.Registers.PC()
+
+	deb.reg8Pairs[0] = reg8Pair{&deb.regs.A, &deb.cpu.Registers.A, "a"}
+	deb.reg8Pairs[1] = reg8Pair{&deb.regs.F, &deb.cpu.Registers.F, "f"}
+	deb.reg8Pairs[2] = reg8Pair{&deb.regs.B, &deb.cpu.Registers.B, "b"}
+	deb.reg8Pairs[3] = reg8Pair{&deb.regs.C, &deb.cpu.Registers.C, "c"}
+	deb.reg8Pairs[4] = reg8Pair{&deb.regs.D, &deb.cpu.Registers.D, "d"}
+	deb.reg8Pairs[5] = reg8Pair{&deb.regs.E, &deb.cpu.Registers.E, "e"}
+	deb.reg8Pairs[6] = reg8Pair{&deb.regs.H, &deb.cpu.Registers.H, "h"}
+	deb.reg8Pairs[7] = reg8Pair{&deb.regs.L, &deb.cpu.Registers.L, "l"}
+
+	deb.reg16Pairs[0] = dataPair[uint16]{deb.regs.PC, deb.cpu.Registers.PC, "pc"}
+	deb.reg16Pairs[1] = dataPair[uint16]{deb.regs.SP, deb.cpu.Registers.SP, "sp"}
+
+	deb.flagPairs[0] = dataPair[bool]{deb.regs.FlagZ, deb.cpu.Registers.FlagZ, "z"}
+	deb.flagPairs[1] = dataPair[bool]{deb.regs.FlagN, deb.cpu.Registers.FlagN, "n"}
+	deb.flagPairs[2] = dataPair[bool]{deb.regs.FlagH, deb.cpu.Registers.FlagH, "h"}
+	deb.flagPairs[3] = dataPair[bool]{deb.regs.FlagC, deb.cpu.Registers.FlagC, "c"}
 }
 
 func (deb *Debugger) newEntry() error {
@@ -237,7 +291,8 @@ func (deb *Debugger) firstPrint() {
 
 func (deb *Debugger) printData() {
 	deb.printEntries()
-	deb.printRegs()
+	deb.printRegs("red")
+	deb.printFlags("red")
 
 	time.Sleep(time.Second)
 }
@@ -253,20 +308,45 @@ func (deb *Debugger) printEntries() {
 	fmt.Print(entriesReturn)
 }
 
-func (deb *Debugger) printRegs() {
-	fmt.Print(regsOffset)
-	fmt.Printf(" a = %02X%s", deb.regs.A, regsOffset)
-	fmt.Printf(" f = %02X%s", deb.regs.F, regsOffset)
-	fmt.Printf(" b = %02X%s", deb.regs.B, regsOffset)
-	fmt.Printf(" c = %02X%s", deb.regs.C, regsOffset)
-	fmt.Printf(" d = %02X%s", deb.regs.D, regsOffset)
-	fmt.Printf(" e = %02X%s", deb.regs.E, regsOffset)
-	fmt.Printf(" h = %02X%s", deb.regs.H, regsOffset)
-	fmt.Printf(" l = %02X%s", deb.regs.L, regsOffset)
-	fmt.Printf("pc = %04X%s", deb.regs.PC(), regsOffset)
-	fmt.Printf("sp = %04X", deb.regs.SP())
+func (deb *Debugger) printRegs(changedColor string) {
+	for _, d := range deb.reg8Pairs {
+		var val string
+		if d.compare() {
+			val = colorizeStr(fmt.Sprintf("%02X", *d.cpuReg), changedColor)
+		} else {
+			val = fmt.Sprintf("%02X", *d.cpuReg)
+		}
+
+		fmt.Printf("%s %s = %s", regsOffset, d.name, val)
+	}
+
+	for _, d := range deb.reg16Pairs {
+		var val string
+		if d.compare() {
+			val = colorizeStr(fmt.Sprintf("%04X", d.cpuReg()), changedColor)
+		} else {
+			val = fmt.Sprintf("%04X", d.cpuReg())
+		}
+
+		fmt.Printf("%s%s = %s", regsOffset, d.name, val)
+	}
 
 	fmt.Print(regsReturn)
+}
+
+func (deb *Debugger) printFlags(changedColor string) {
+	for _, d := range deb.flagPairs {
+		var val string
+		if d.compare() {
+			val = colorizeStr(fmt.Sprintf("%d", boolNum[d.cpuReg()]), changedColor)
+		} else {
+			val = fmt.Sprintf("%d", boolNum[d.cpuReg()])
+		}
+
+		fmt.Printf("%s%s=%s", flagsOffset, d.name, val)
+	}
+
+	fmt.Print(flagsReturn)
 }
 
 func (deb *Debugger) Step() (bool, error) {
@@ -283,8 +363,8 @@ func (deb *Debugger) Step() (bool, error) {
 	// Checking if new instruction has been read
 	if deb.cpu.ReadNewInstruction {
 		deb.newEntry()
-		deb.regs = *deb.cpu.Registers
 		deb.printData()
+		deb.regs = *deb.cpu.Registers
 	}
 
 	return cpuEnd, nil
