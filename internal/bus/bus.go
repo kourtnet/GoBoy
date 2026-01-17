@@ -46,3 +46,23 @@ func (b *Bus) Write(addr uint16, val byte) error {
 
 	return nil
 }
+
+// TODO: check where loop call of Read is used to replace
+// it with batch
+func (b *Bus) ReadBatch(start, end uint16) ([]byte, error) {
+	if start > end {
+		return []byte{}, fmt.Errorf("start address is bigger than the end")
+	}
+
+	if int(start) >= len(b.RAM) {
+		return []byte{}, NewOutOfRange(start)
+	}
+
+	if int(end) >= len(b.RAM) {
+		end = uint16(len(b.RAM) - 1)
+	}
+
+	end++
+
+	return b.RAM[start:end], nil
+}
