@@ -29,6 +29,8 @@ func New(bus iBus) (CPU, error) {
 	cpu := CPU{
 		Registers: &Registers{
 			pc: 0x100,
+			S:  0xFF,
+			P:  0xFE,
 		},
 		bus: bus,
 	}
