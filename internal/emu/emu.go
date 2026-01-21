@@ -32,17 +32,23 @@ func Run() {
 		die.Die(err.Error())
 	}
 
-	var stepper stepper
-	stepper = deb
-
-	var cpuEnd bool
-
-	// WARNING: remove later
-	for err == nil && !cpuEnd {
-		cpuEnd, err = stepper.Step()
-	}
-
+	err = deb.Run()
 	if err != nil {
 		die.Die(err.Error())
 	}
+
+	// var stepper stepper
+	// stepper = deb
+	//
+	// var cpuEnd bool
+	//
+	// // WARNING: remove later
+	//
+	//	for err == nil && !cpuEnd {
+	//		cpuEnd, err = stepper.Step()
+	//	}
+	//
+	//	if err != nil {
+	//		die.Die(err.Error())
+	//	}
 }

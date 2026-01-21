@@ -8,12 +8,10 @@ import (
 
 	"github.com/kourtnet/GoBoy/internal/bus"
 	"github.com/kourtnet/GoBoy/internal/cpu"
+	"github.com/rivo/tview"
 )
 
-type entry struct {
-	str  string
-	next *entry
-}
+const romAddrEnd uint16 = 0x7FFF
 
 // struct required for easier registers compare
 type reg8Pair struct {
@@ -36,6 +34,12 @@ func (d *dataPair[T]) compare() bool {
 	return d.cpuReg() != d.debReg()
 }
 
+type tui struct {
+	app              *tview.Application
+	instructionsList *tview.List
+	topFlex          *tview.Flex
+}
+
 type Debugger struct {
 	cpu *cpu.CPU
 	bus *bus.Bus
@@ -48,11 +52,11 @@ type Debugger struct {
 	flagPairs  [4]dataPair[bool]
 
 	instructions        [instructionsNum]instruction
-	entriesTail         *entry
-	entriesHead         *entry
 	entriesNum          int
 	nextInstructionAddr uint16
 	isNotFirstStep      bool
+
+	tui tui
 }
 
 func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
@@ -63,9 +67,10 @@ func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
 	}
 
 	deb.initCPU()
+	deb.initTUI()
 
-	for deb.entriesNum < entriesOnScreen {
-		err := deb.newEntry()
+	for i := deb.cpu.Registers.PC(); i <= romAddrEnd; i++ {
+		row, err := deb.newEntry()
 		if err != nil {
 			var ourErr bus.OutOfRange
 			if !errors.As(err, &ourErr) {
@@ -74,6 +79,8 @@ func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
 
 			break
 		}
+
+		deb.tui.instructionsList.AddItem(row, "", 0, nil)
 	}
 
 	return &deb, nil
@@ -104,34 +111,27 @@ func (deb *Debugger) initCPU() {
 	deb.flagPairs[3] = dataPair[bool]{deb.regs.FlagC, deb.cpu.Registers.FlagC, "c"}
 }
 
-func (deb *Debugger) newEntry() error {
-	str, err := deb.newEntryStr()
-	if err != nil {
-		return err
-	}
+// TODO: mb change to tui instead of deb?
+func (deb *Debugger) initTUI() {
+	deb.tui.app = tview.NewApplication()
 
-	ent := &entry{str: str}
-	if deb.entriesTail == nil {
-		// dummy for first call
-		deb.entriesTail = &entry{next: ent}
-		deb.entriesHead = ent
-		deb.entriesNum = 2
-		return nil
-	}
+	deb.tui.instructionsList = tview.NewList()
 
-	deb.entriesHead.next = ent
-	deb.entriesHead = deb.entriesHead.next
+	deb.tui.instructionsList.
+		SetHighlightFullLine(true).
+		ShowSecondaryText(false).
+		SetBorder(true).
+		SetTitle(instructionsTitle).
+		SetTitleAlign(tview.AlignLeft)
 
-	if deb.entriesNum >= entriesOnScreen {
-		deb.entriesTail = deb.entriesTail.next
-	} else {
-		deb.entriesNum++
-	}
+	deb.tui.topFlex = tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(deb.tui.instructionsList, 0, 1, true)
 
-	return nil
+	deb.tui.app.SetRoot(deb.tui.topFlex, true)
 }
 
-func (deb *Debugger) newEntryStr() (string, error) {
+func (deb *Debugger) newEntry() (string, error) {
 	opcode, err := deb.bus.Read(deb.nextInstructionAddr)
 	if err != nil {
 		return "", err
@@ -174,8 +174,8 @@ func (deb *Debugger) newEntryStr() (string, error) {
 
 	str := fmt.Sprintf(
 		entryFormat,
-		instructionAddr,
-		byteSeq,
+		fmt.Sprintf("%04X", instructionAddr),
+		fmt.Sprintf("%02X", byteSeq),
 		instruction.name,
 		instruction.ArgsFormat,
 	)
@@ -194,20 +194,28 @@ func (deb *Debugger) Step() (bool, error) {
 		return cpuEnd, err
 	}
 
-	// Checking if new instruction has been read
-	if deb.cpu.ReadNewInstruction {
-		err := deb.newEntry()
-		if err != nil {
-			return false, err
-		}
+	//	// Checking if new instruction has been read
+	//	if deb.cpu.ReadNewInstruction {
+	//		err := deb.newEntry()
+	//		if err != nil {
+	//			return false, err
+	//		}
+	//
+	//		err = deb.printData()
+	//		if err != nil {
+	//			return false, err
+	//		}
+	//
+	//		deb.regs = *deb.cpu.Registers
+	//	}
+	//
+	return cpuEnd, nil
+}
 
-		err = deb.printData()
-		if err != nil {
-			return false, err
-		}
-
-		deb.regs = *deb.cpu.Registers
+func (deb *Debugger) Run() error {
+	if err := deb.tui.app.Run(); err != nil {
+		return err
 	}
 
-	return cpuEnd, nil
+	return nil
 }

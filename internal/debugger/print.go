@@ -14,7 +14,7 @@ const (
 	memoryLinesOnScreen = 8
 	memoryBytesInLine   = 16
 	memoryBytesOnScreen = memoryBytesInLine * memoryLinesOnScreen
-	entryFormat         = "%02X    %02X\t  %-10s%s"
+	entryFormat         = "%-6s %-12s %-10s %s"
 	entryWidth          = 52
 	regWidth            = 11
 	flagWidth           = 5
@@ -24,7 +24,7 @@ const (
 	height = 1 + entriesOnScreen + 1 + memoryLinesOnScreen + 1
 	width  = 1 + entryWidth + 1 + regWidth + 1 + flagWidth + 1
 
-	instructionsLabel = "Instructions"
+	instructionsTitle = "Instructions"
 	registersLabel    = "Registers"
 	flagsLabel        = "Flg"
 	memoryLabel       = "Memory"
@@ -43,8 +43,8 @@ var (
 
 	blankField = strings.Repeat(strings.Repeat(" ", width)+"\n", height) + "\r\033[" + strconv.Itoa(height+1) + "A"
 
-	topBorder = ("╔═" + colorizeStr(instructionsLabel, "red") +
-		strings.Repeat("═", entryWidth-1-len(instructionsLabel)) +
+	topBorder = ("╔═" + colorizeStr(instructionsTitle, "red") +
+		strings.Repeat("═", entryWidth-1-len(instructionsTitle)) +
 		"╦═" + colorizeStr(registersLabel, "yellow") +
 		strings.Repeat("═", regWidth-1-len(registersLabel)) +
 		"╦═" + colorizeStr(flagsLabel, "blue") +
@@ -140,14 +140,16 @@ func (deb *Debugger) printData() error {
 }
 
 func (deb *Debugger) printEntries() {
-	fmt.Print(entriesBlankField + entriesReturn)
-
-	entry := deb.entriesTail
-	for entry != nil {
-		fmt.Print(entriesOffset + entry.str)
-		entry = entry.next
-	}
-	fmt.Print(entriesReturn)
+	// fmt.Print(entriesBlankField + entriesReturn)
+	//
+	// entry := deb.entriesTail
+	//
+	//	for entry != nil {
+	//		fmt.Print(entriesOffset + entry.str)
+	//		entry = entry.next
+	//	}
+	//
+	// fmt.Print(entriesReturn)
 }
 
 func (deb *Debugger) printRegs(changedColor string) {
