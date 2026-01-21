@@ -2,42 +2,47 @@
 package debugger
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/kourtnet/GoBoy/internal/bus"
 	"github.com/kourtnet/GoBoy/internal/cpu"
 	"github.com/rivo/tview"
 )
 
+var instructionsTitle = "Instructions"
+
 const romAddrEnd uint16 = 0x7FFF
 
-// struct required for easier registers compare
-type reg8Pair struct {
-	debReg *byte
-	cpuReg *byte
-	name   string
-}
-
-func (d *reg8Pair) compare() bool {
-	return *d.cpuReg != *d.debReg
-}
-
-type dataPair[T comparable] struct {
-	debReg func() T
-	cpuReg func() T
-	name   string
-}
-
-func (d *dataPair[T]) compare() bool {
-	return d.cpuReg() != d.debReg()
-}
-
 type tui struct {
-	app              *tview.Application
-	instructionsList *tview.List
-	topFlex          *tview.Flex
+	app      *tview.Application
+	instList *instructionList
+	topFlex  *tview.Flex
+}
+
+// TODO: mb change to tui instead of deb?
+func newTUI() *tui {
+	tui := &tui{}
+	tui.app = tview.NewApplication()
+
+	tui.instList = newInstructionList()
+
+	tui.instList.
+		SetHighlightFullLine(true).
+		ShowSecondaryText(false).
+		SetBorder(true).
+		SetTitle(instructionsTitle).
+		SetTitleAlign(tview.AlignLeft).
+		SetTitleColor(tcell.ColorGreen)
+
+	tui.topFlex = tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(tui.instList, 0, 1, true)
+
+	tui.app.SetRoot(tui.topFlex, true)
+
+	return tui
 }
 
 type Debugger struct {
@@ -46,175 +51,151 @@ type Debugger struct {
 
 	// Required to check which cpu parameters have
 	// changed after the Step()
-	regs       cpu.Registers
-	reg8Pairs  [8]reg8Pair
-	reg16Pairs [2]dataPair[uint16]
-	flagPairs  [4]dataPair[bool]
+	regs cpu.Registers
+	//	reg8Pairs  [8]reg8Pair
+	//	reg16Pairs [2]dataPair[uint16]
+	//	flagPairs  [4]dataPair[bool]
+	//
+	instructions [instructionsNum]instruction
+	//	entriesNum          int
+	//	nextInstructionAddr uint16
+	//	isNotFirstStep      bool
 
-	instructions        [instructionsNum]instruction
-	entriesNum          int
-	nextInstructionAddr uint16
-	isNotFirstStep      bool
-
-	tui tui
+	tui *tui
+	// initPC            uint16
+	// lastInstAddr      uint16
+	// oldRow            string
+	// instructionsAddrs map[uint16]int
+	doneCh chan struct{}
+	err    error
 }
 
 func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
-	deb := Debugger{
-		cpu:  cpu,
-		bus:  b,
-		regs: *cpu.Registers,
+	deb := &Debugger{
+		cpu:    cpu,
+		bus:    b,
+		tui:    newTUI(),
+		doneCh: make(chan struct{}),
 	}
-
-	deb.initCPU()
-	deb.initTUI()
-
-	for i := deb.cpu.Registers.PC(); i <= romAddrEnd; i++ {
-		row, err := deb.newEntry()
-		if err != nil {
-			var ourErr bus.OutOfRange
-			if !errors.As(err, &ourErr) {
-				return nil, err
-			}
-
-			break
-		}
-
-		deb.tui.instructionsList.AddItem(row, "", 0, nil)
-	}
-
-	return &deb, nil
-}
-
-func (deb *Debugger) initCPU() {
-	// Invalid opcode. Required for first step proper processing
-	deb.regs.IR = 0xD3
 
 	deb.initInstructions()
-	deb.nextInstructionAddr = deb.cpu.Registers.PC()
+	deb.loadInstructions()
+	deb.initControls()
 
-	deb.reg8Pairs[0] = reg8Pair{&deb.regs.A, &deb.cpu.Registers.A, "a"}
-	deb.reg8Pairs[1] = reg8Pair{&deb.regs.F, &deb.cpu.Registers.F, "f"}
-	deb.reg8Pairs[2] = reg8Pair{&deb.regs.B, &deb.cpu.Registers.B, "b"}
-	deb.reg8Pairs[3] = reg8Pair{&deb.regs.C, &deb.cpu.Registers.C, "c"}
-	deb.reg8Pairs[4] = reg8Pair{&deb.regs.D, &deb.cpu.Registers.D, "d"}
-	deb.reg8Pairs[5] = reg8Pair{&deb.regs.E, &deb.cpu.Registers.E, "e"}
-	deb.reg8Pairs[6] = reg8Pair{&deb.regs.H, &deb.cpu.Registers.H, "h"}
-	deb.reg8Pairs[7] = reg8Pair{&deb.regs.L, &deb.cpu.Registers.L, "l"}
-
-	deb.reg16Pairs[0] = dataPair[uint16]{deb.regs.PC, deb.cpu.Registers.PC, "pc"}
-	deb.reg16Pairs[1] = dataPair[uint16]{deb.regs.SP, deb.cpu.Registers.SP, "sp"}
-
-	deb.flagPairs[0] = dataPair[bool]{deb.regs.FlagZ, deb.cpu.Registers.FlagZ, "z"}
-	deb.flagPairs[1] = dataPair[bool]{deb.regs.FlagN, deb.cpu.Registers.FlagN, "n"}
-	deb.flagPairs[2] = dataPair[bool]{deb.regs.FlagH, deb.cpu.Registers.FlagH, "h"}
-	deb.flagPairs[3] = dataPair[bool]{deb.regs.FlagC, deb.cpu.Registers.FlagC, "c"}
+	return deb, nil
 }
 
-// TODO: mb change to tui instead of deb?
-func (deb *Debugger) initTUI() {
-	deb.tui.app = tview.NewApplication()
-
-	deb.tui.instructionsList = tview.NewList()
-
-	deb.tui.instructionsList.
-		SetHighlightFullLine(true).
-		ShowSecondaryText(false).
-		SetBorder(true).
-		SetTitle(instructionsTitle).
-		SetTitleAlign(tview.AlignLeft)
-
-	deb.tui.topFlex = tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(deb.tui.instructionsList, 0, 1, true)
-
-	deb.tui.app.SetRoot(deb.tui.topFlex, true)
-}
-
-func (deb *Debugger) newEntry() (string, error) {
-	opcode, err := deb.bus.Read(deb.nextInstructionAddr)
+func (deb *Debugger) loadInstructions() error {
+	data, err := deb.bus.ReadBatch(
+		deb.cpu.Registers.PC(),
+		romAddrEnd,
+	)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	instructionAddr := deb.nextInstructionAddr
-	deb.nextInstructionAddr++
+	for i := 0; i < len(data); {
+		pc := uint16(i) + deb.cpu.Registers.PC()
+		byteSeq := make([]byte, 1, 3)
 
-	instruction := instruction{name: "UNKNOWN"}
-	if int(opcode) <= len(deb.instructions) && deb.instructions[opcode].name != "" {
-		instruction = deb.instructions[opcode]
-	}
+		byteSeq[0] = data[i]
 
-	instruction.ArgsFormat = strings.ReplaceAll(instruction.ArgsFormat, "n16", "n8n8")
-	byteSeq := make([]byte, 1, 3)
-	byteSeq[0] = opcode
+		inst := deb.instructions[byteSeq[0]]
+		if inst.name == "" {
+			inst.name = "UNKNOWN"
+		}
 
-	for strings.Contains(instruction.ArgsFormat, "n8") {
-		arg, err := deb.bus.Read(deb.nextInstructionAddr)
-		if err != nil {
-			var oufErr bus.OutOfRange
-			if !errors.As(err, &oufErr) {
-				return "", err
+		inst.ArgsFormat = strings.ReplaceAll(inst.ArgsFormat, "n16", "n8n8")
+
+		for range strings.Count(inst.ArgsFormat, "n8") {
+			i++
+			if i >= len(data) {
+				inst.ArgsFormat = strings.ReplaceAll(inst.ArgsFormat, "n8", "??")
+				inst.ArgsFormat += " (INCOMPLETE)"
+				break
 			}
 
-			instruction.ArgsFormat = strings.ReplaceAll(instruction.ArgsFormat, "n8", "??")
-			instruction.ArgsFormat += " INCOMPLETE INSTRUCTION"
+			byteSeq = append(byteSeq, data[i])
+
+			arg := fmt.Sprintf("%02X", data[i])
+			substrInd := strings.LastIndex(inst.ArgsFormat, "n8")
+
+			inst.ArgsFormat = (inst.ArgsFormat[:substrInd] +
+				arg + inst.ArgsFormat[substrInd+len("n8"):])
 		}
 
-		deb.nextInstructionAddr++
-
-		idx := strings.LastIndex(instruction.ArgsFormat, "n8")
-		if idx == -1 {
-			break
-		}
-
-		instruction.ArgsFormat = instruction.ArgsFormat[:idx] + fmt.Sprintf("%02X", arg) + instruction.ArgsFormat[idx+len("n8"):]
-		byteSeq = append(byteSeq, arg)
+		deb.tui.instList.addItemByPC(pc, byteSeq, inst)
+		i++
 	}
 
-	str := fmt.Sprintf(
-		entryFormat,
-		fmt.Sprintf("%04X", instructionAddr),
-		fmt.Sprintf("%02X", byteSeq),
-		instruction.name,
-		instruction.ArgsFormat,
-	)
-
-	return str, nil
+	return nil
 }
 
-func (deb *Debugger) Step() (bool, error) {
-	if !deb.isNotFirstStep {
-		deb.firstPrint()
-		deb.isNotFirstStep = true
-	}
+func (deb *Debugger) stepInst() {
+	for {
+		select {
+		case <-deb.doneCh:
+			return
+		default:
+		}
 
-	cpuEnd, err := deb.cpu.Step()
-	if err != nil {
-		return cpuEnd, err
-	}
+		cpuEnd, err := deb.cpu.Step()
+		if err != nil {
+			deb.err = err
+			close(deb.doneCh)
+			return
+		}
 
-	//	// Checking if new instruction has been read
-	//	if deb.cpu.ReadNewInstruction {
-	//		err := deb.newEntry()
-	//		if err != nil {
-	//			return false, err
-	//		}
-	//
-	//		err = deb.printData()
-	//		if err != nil {
-	//			return false, err
-	//		}
-	//
-	//		deb.regs = *deb.cpu.Registers
-	//	}
-	//
-	return cpuEnd, nil
+		if cpuEnd {
+			close(deb.doneCh)
+			return
+		}
+
+		if deb.cpu.ReadNewInstruction {
+			deb.tui.instList.setCurrItemByPC(deb.cpu.Registers.PC() - 1)
+			break
+		}
+	}
+}
+
+func (deb *Debugger) initControls() {
+	deb.tui.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'b' {
+			deb.stepInst()
+			return nil
+		}
+
+		return event
+	})
 }
 
 func (deb *Debugger) Run() error {
-	if err := deb.tui.app.Run(); err != nil {
+	cpuEnd, err := deb.cpu.Step()
+	if err != nil {
 		return err
+	}
+
+	if cpuEnd {
+		return nil
+	}
+
+	deb.tui.instList.setCurrItemByPC(deb.cpu.Registers.PC() - 1)
+
+	go func() {
+		deb.err = deb.tui.app.Run()
+
+		select {
+		case <-deb.doneCh:
+		default:
+			close(deb.doneCh)
+		}
+	}()
+
+	<-deb.doneCh
+	deb.tui.app.Stop()
+
+	if deb.err != nil {
+		return deb.err
 	}
 
 	return nil
