@@ -19,19 +19,28 @@ var (
 	instructionsTitle = "Instructions"
 	registersTitle    = "Regs"
 	flagsTitle        = "Flg"
+	memoryTitle       = "Memory"
 )
 
-const romAddrEnd uint16 = 0x7FFF
+const (
+	romAddrEnd uint16 = 0x7FFF
+	addrEnd    uint16 = 0xFFFF
+)
 
 type tui struct {
-	app       *tview.Application
+	app *tview.Application
+
 	instList  *instructionList
 	regTable  *tview.Table
 	flagTable *tview.Table
 	topFlex   *tview.Flex
+
+	memTable   *tview.Table
+	bottomFlex *tview.Flex
+
+	mainFlex *tview.Flex
 }
 
-// TODO: mb change to tui instead of deb?
 func newTUI() *tui {
 	tui := &tui{}
 	tui.app = tview.NewApplication()
@@ -84,7 +93,24 @@ func newTUI() *tui {
 		AddItem(tui.regTable, 11, 0, false).
 		AddItem(tui.flagTable, 7, 0, false)
 
-	tui.app.SetRoot(tui.topFlex, true)
+	tui.memTable = tview.NewTable()
+	tui.memTable.
+		SetSelectable(false, false).
+		SetTitle(memoryTitle).
+		SetTitleAlign(tview.AlignLeft).
+		SetTitleColor(tcell.ColorBlue).
+		SetBorder(true)
+
+	tui.bottomFlex = tview.NewFlex().
+		SetDirection(tview.FlexColumn).
+		AddItem(tui.memTable, 0, 1, false)
+
+	tui.mainFlex = tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(tui.topFlex, 0, 1, true).
+		AddItem(tui.bottomFlex, 0, 1, false)
+
+	tui.app.SetRoot(tui.mainFlex, true)
 
 	return tui
 }
@@ -124,13 +150,13 @@ func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
 	}
 
 	deb.initInstructions()
-	deb.loadInstructions()
+	deb.loadROM()
 	deb.initControls()
 
 	return deb, nil
 }
 
-func (deb *Debugger) loadInstructions() error {
+func (deb *Debugger) loadROM() error {
 	data, err := deb.bus.ReadBatch(
 		deb.cpu.Registers.PC(),
 		romAddrEnd,
@@ -265,6 +291,10 @@ func (deb *Debugger) initControls() {
 		}
 
 		return event
+	})
+
+	deb.tui.app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
+		width, height := screen.Size()
 	})
 }
 

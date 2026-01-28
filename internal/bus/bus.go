@@ -1,15 +1,15 @@
 // Package bus contains Bus struct which implements memory read/write
-// operations and different memory blocks mapping (ROM, WRAM, VRAM, e.t.c.)
+// operations and different memory blocks mapping (ROM, Wmemory, VRAM, e.t.c.)
 package bus
 
 import "fmt"
 
 const (
-	ramSize = 64 * 1024
+	memorySize = 64 * 1024
 )
 
 type Bus struct {
-	RAM [ramSize]byte
+	memory []byte
 }
 
 type OutOfRange struct {
@@ -29,20 +29,30 @@ func (o OutOfRange) Error() string {
 	return o.str
 }
 
+func New() *Bus {
+	return &Bus{
+		memory: make([]byte, memorySize),
+	}
+}
+
+func (b *Bus) Memory() []byte {
+	return b.memory
+}
+
 func (b *Bus) Read(addr uint16) (byte, error) {
-	if int(addr) >= len(b.RAM) {
+	if int(addr) >= len(b.memory) {
 		return 0, NewOutOfRange(addr)
 	}
 
-	return b.RAM[addr], nil
+	return b.memory[addr], nil
 }
 
 func (b *Bus) Write(addr uint16, val byte) error {
-	if int(addr) >= len(b.RAM) {
+	if int(addr) >= len(b.memory) {
 		return NewOutOfRange(addr)
 	}
 
-	b.RAM[addr] = val
+	b.memory[addr] = val
 
 	return nil
 }
@@ -54,20 +64,20 @@ func (b *Bus) ReadBatch(start, end uint16) ([]byte, error) {
 		return b.readBatchSplitted(start, end)
 	}
 
-	if int(start) >= len(b.RAM) {
+	if int(start) >= len(b.memory) {
 		return []byte{}, NewOutOfRange(start)
 	}
 
-	if int(end) >= len(b.RAM) {
-		end = uint16(len(b.RAM) - 1)
+	if int(end) >= len(b.memory) {
+		end = uint16(len(b.memory) - 1)
 	}
 
-	return b.RAM[start : uint32(end)+1], nil
+	return b.memory[start : uint32(end)+1], nil
 }
 
 func (b *Bus) readBatchSplitted(start, end uint16) ([]byte, error) {
 	start1 := start
-	end1 := uint16(len(b.RAM) - 1)
+	end1 := uint16(len(b.memory) - 1)
 
 	start2 := uint16(0)
 	end2 := end

@@ -14,7 +14,7 @@ func Run() {
 	flags := flags.Flags{}
 	flags.MustParse()
 
-	bus := &bus.Bus{}
+	bus := bus.New()
 
 	err := romload.Load(flags.RomFile, bus)
 	if err != nil {
