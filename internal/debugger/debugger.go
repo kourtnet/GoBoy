@@ -22,10 +22,7 @@ var (
 	memoryTitle       = "Memory"
 )
 
-const (
-	romAddrEnd uint16 = 0x7FFF
-	addrEnd    uint16 = 0xFFFF
-)
+const romAddrEnd uint16 = 0x7FFF
 
 type tui struct {
 	app *tview.Application
@@ -36,12 +33,13 @@ type tui struct {
 	topFlex   *tview.Flex
 
 	memTable   *tview.Table
+	memContent *memoryContent
 	bottomFlex *tview.Flex
 
 	mainFlex *tview.Flex
 }
 
-func newTUI() *tui {
+func newTUI(memory []byte) *tui {
 	tui := &tui{}
 	tui.app = tview.NewApplication()
 
@@ -93,6 +91,7 @@ func newTUI() *tui {
 		AddItem(tui.regTable, 11, 0, false).
 		AddItem(tui.flagTable, 7, 0, false)
 
+	tui.memContent = newMemoryTable(memory)
 	tui.memTable = tview.NewTable()
 	tui.memTable.
 		SetSelectable(false, false).
@@ -100,6 +99,7 @@ func newTUI() *tui {
 		SetTitleAlign(tview.AlignLeft).
 		SetTitleColor(tcell.ColorBlue).
 		SetBorder(true)
+	tui.memTable.SetContent(tui.memContent)
 
 	tui.bottomFlex = tview.NewFlex().
 		SetDirection(tview.FlexColumn).
@@ -121,23 +121,11 @@ type Debugger struct {
 
 	// Required to check which cpu parameters have
 	// changed after the Step()
-	regs cpu.Registers
-	//	reg8Pairs  [8]reg8Pair
-	//	reg16Pairs [2]dataPair[uint16]
-	//	flagPairs  [4]dataPair[bool]
-	//
+	regs         cpu.Registers
 	instructions [instructionsNum]instruction
-	//	entriesNum          int
-	//	nextInstructionAddr uint16
-	//	isNotFirstStep      bool
-
-	tui *tui
-	// initPC            uint16
-	// lastInstAddr      uint16
-	// oldRow            string
-	// instructionsAddrs map[uint16]int
-	doneCh chan struct{}
-	err    error
+	tui          *tui
+	doneCh       chan struct{}
+	err          error
 }
 
 func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
@@ -145,7 +133,7 @@ func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
 		cpu:    cpu,
 		bus:    b,
 		regs:   *cpu.Registers,
-		tui:    newTUI(),
+		tui:    newTUI(b.Memory()),
 		doneCh: make(chan struct{}),
 	}
 
@@ -294,7 +282,13 @@ func (deb *Debugger) initControls() {
 	})
 
 	deb.tui.app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
-		width, height := screen.Size()
+		width, _ := screen.Size()
+		bytesInLine := (width - 9) / 3
+		if bytesInLine != deb.tui.memContent.bytesInLine {
+			deb.tui.memContent.bytesInLine = bytesInLine
+			deb.tui.memTable.SetContent(deb.tui.memContent)
+		}
+		return false
 	})
 }
 

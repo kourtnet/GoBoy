@@ -34,6 +34,14 @@ func (mt *memoryContent) GetCell(row, col int) *tview.TableCell {
 	}
 
 	return tview.NewTableCell(
-		fmt.Sprintf("%02X", addr),
+		fmt.Sprintf("%02X", mt.memory[addr]),
 	)
+}
+
+func (mt *memoryContent) GetColumnCount() int {
+	return mt.bytesInLine + 1
+}
+
+func (mt *memoryContent) GetRowCount() int {
+	return len(mt.memory) / mt.bytesInLine
 }
