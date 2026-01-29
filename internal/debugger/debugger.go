@@ -20,9 +20,15 @@ var (
 	registersTitle    = "Regs"
 	flagsTitle        = "Flg"
 	memoryTitle       = "Memory"
+	stackTitle        = "Stck"
 )
 
-const romAddrEnd uint16 = 0x7FFF
+const (
+	romAddrEnd    uint16 = 0x7FFF
+	regTableLen          = 11
+	flagTableLen         = 7
+	stackTableLen        = 14
+)
 
 type tui struct {
 	app *tview.Application
@@ -32,14 +38,16 @@ type tui struct {
 	flagTable *tview.Table
 	topFlex   *tview.Flex
 
-	memTable   *tview.Table
-	memContent *memoryContent
-	bottomFlex *tview.Flex
+	memTable     *tview.Table
+	memContent   *memoryContent
+	stackTable   *tview.Table
+	stackContent *stackContent
+	bottomFlex   *tview.Flex
 
 	mainFlex *tview.Flex
 }
 
-func newTUI(memory []byte) *tui {
+func newTUI(memory []byte, sp uint16) *tui {
 	tui := &tui{}
 	tui.app = tview.NewApplication()
 
@@ -89,8 +97,8 @@ func newTUI(memory []byte) *tui {
 	tui.topFlex = tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(tui.instList, 0, 1, true).
-		AddItem(tui.regTable, 11, 0, false).
-		AddItem(tui.flagTable, 7, 0, false)
+		AddItem(tui.regTable, regTableLen, 0, false).
+		AddItem(tui.flagTable, flagTableLen, 0, false)
 
 	tui.memContent = newMemoryTable(memory)
 	tui.memTable = tview.NewTable()
@@ -102,9 +110,25 @@ func newTUI(memory []byte) *tui {
 		SetBorder(true)
 	tui.memTable.SetContent(tui.memContent)
 
+	tui.stackContent = newStackContent(memory, sp)
+	tui.stackTable = tview.NewTable()
+	tui.stackTable.
+		SetBorder(true).
+		SetTitle(stackTitle).
+		SetTitleAlign(tview.AlignCenter).
+		SetTitleColor(tcell.ColorPurple)
+	tui.stackTable.SetContent(tui.stackContent)
+	tui.stackTable.SetOffset(int(tui.stackContent.sp), 0)
+
 	tui.bottomFlex = tview.NewFlex().
 		SetDirection(tview.FlexColumn).
-		AddItem(tui.memTable, 0, 1, true)
+		AddItem(tui.memTable, 0, 1, true).
+		AddItem(
+			tui.stackTable,
+			stackTableLen,
+			1,
+			true,
+		)
 
 	tui.mainFlex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
@@ -134,7 +158,7 @@ func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
 		cpu:    cpu,
 		bus:    b,
 		regs:   *cpu.Registers,
-		tui:    newTUI(b.Memory()),
+		tui:    newTUI(b.Memory(), cpu.Registers.SP()),
 		doneCh: make(chan struct{}),
 	}
 
@@ -265,6 +289,7 @@ func (deb *Debugger) stepInst() {
 
 		if deb.cpu.ReadNewInstruction {
 			deb.tui.instList.setCurrItemByPC(deb.cpu.Registers.PC() - 1)
+			deb.tui.stackContent.sp = deb.cpu.Registers.SP()
 			deb.setRegs()
 			deb.regs = *deb.cpu.Registers
 			break
@@ -278,6 +303,12 @@ func (deb *Debugger) initControls() {
 		case 'b':
 			deb.stepInst()
 			return nil
+		case 's':
+			deb.tui.stackTable.SetOffset(
+				int(deb.cpu.Registers.SP()),
+				0,
+			)
+			return nil
 		case '1':
 			deb.tui.app.SetFocus(deb.tui.instList)
 			return nil
@@ -290,6 +321,9 @@ func (deb *Debugger) initControls() {
 		case '4':
 			deb.tui.app.SetFocus(deb.tui.memTable)
 			return nil
+		case '5':
+			deb.tui.app.SetFocus(deb.tui.stackTable)
+			return nil
 		}
 
 		return event
@@ -297,10 +331,9 @@ func (deb *Debugger) initControls() {
 
 	deb.tui.app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
 		width, _ := screen.Size()
-		bytesInLine := (width - 9) / 3
+		bytesInLine := (width - 10 - stackTableLen) / 3
 		if bytesInLine != deb.tui.memContent.bytesInLine {
 			deb.tui.memContent.bytesInLine = bytesInLine
-			deb.tui.memTable.SetContent(deb.tui.memContent)
 		}
 		return false
 	})
