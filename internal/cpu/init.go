@@ -9,6 +9,7 @@ func (cpu *CPU) initInstructions() {
 
 	cpu.initArithmetic()
 	cpu.initLogic()
+	cpu.initCall()
 }
 
 func (cpu *CPU) initNOP() {
@@ -327,4 +328,9 @@ func (cpu *CPU) initLogic() {
 	cpu.instructions[0xAC] = []func(){cpu.xorR8('H')}
 	cpu.instructions[0xAD] = []func(){cpu.xorR8('L')}
 	cpu.instructions[0xAF] = []func(){cpu.xorR8('A')}
+}
+
+func (cpu *CPU) initCall() {
+	// jump n16
+	cpu.instructions[0xC3] = []func(){cpu.readN16Lsb, cpu.readN16Msb, cpu.ldR16R16("PC", "Temp16"), cpu.nop}
 }

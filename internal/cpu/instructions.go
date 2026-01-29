@@ -123,6 +123,8 @@ func (cpu *CPU) determine16RegSetter(rName string) func(uint16) {
 		return cpu.Registers.SetSP
 	case "AF":
 		return cpu.Registers.SetAF
+	case "PC":
+		return cpu.Registers.SetPC
 	default:
 		cpu.internalErr = fmt.Errorf("unknown register name '%s'", rName)
 		return func(uint16) {}

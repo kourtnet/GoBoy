@@ -167,6 +167,10 @@ func (r *Registers) Temp16() uint16 {
 	return r.temp16
 }
 
+func (r *Registers) SetPC(val uint16) {
+	r.pc = val
+}
+
 func (r *Registers) IncPC() {
 	r.pc++
 }
