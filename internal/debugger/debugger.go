@@ -45,6 +45,7 @@ func newTUI(memory []byte) *tui {
 
 	tui.instList = newInstructionList()
 	tui.instList.
+		SetSelectedFocusOnly(true).
 		SetHighlightFullLine(true).
 		ShowSecondaryText(false).
 		SetBorder(true).
@@ -103,12 +104,12 @@ func newTUI(memory []byte) *tui {
 
 	tui.bottomFlex = tview.NewFlex().
 		SetDirection(tview.FlexColumn).
-		AddItem(tui.memTable, 0, 1, false)
+		AddItem(tui.memTable, 0, 1, true)
 
 	tui.mainFlex = tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(tui.topFlex, 0, 1, true).
-		AddItem(tui.bottomFlex, 0, 1, false)
+		AddItem(tui.topFlex, 0, 3, true).
+		AddItem(tui.bottomFlex, 0, 2, false)
 
 	tui.app.SetRoot(tui.mainFlex, true)
 
@@ -273,8 +274,21 @@ func (deb *Debugger) stepInst() {
 
 func (deb *Debugger) initControls() {
 	deb.tui.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Rune() == 'b' {
+		switch event.Rune() {
+		case 'b':
 			deb.stepInst()
+			return nil
+		case '1':
+			deb.tui.app.SetFocus(deb.tui.instList)
+			return nil
+		case '2':
+			deb.tui.app.SetFocus(deb.tui.regTable)
+			return nil
+		case '3':
+			deb.tui.app.SetFocus(deb.tui.flagTable)
+			return nil
+		case '4':
+			deb.tui.app.SetFocus(deb.tui.memTable)
 			return nil
 		}
 
