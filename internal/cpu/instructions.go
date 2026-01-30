@@ -623,7 +623,7 @@ func (cpu *CPU) condJump(fName byte, cond bool) func() {
 		if f() == cond {
 			cpu.Registers.SetPC(cpu.Registers.Temp16())
 		} else {
-			cpu.opNum++
+			*cpu.opNum++
 		}
 	}
 }

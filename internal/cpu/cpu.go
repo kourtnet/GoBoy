@@ -10,7 +10,7 @@ const instructionsNum = 256
 type CPU struct {
 	instructions       [instructionsNum][]func()
 	currInstructionLen int
-	opNum              int
+	opNum              *int
 	MCycle             int
 
 	// required for operations that work with external structs (like bus)
@@ -26,13 +26,15 @@ type CPU struct {
 }
 
 func New(bus iBus) (CPU, error) {
+	opNum := 0
 	cpu := CPU{
 		Registers: &Registers{
 			pc: 0x100,
 			S:  0xFF,
 			P:  0xFE,
 		},
-		bus: bus,
+		bus:   bus,
+		opNum: &opNum,
 	}
 
 	// instruction set
@@ -57,7 +59,7 @@ func (cpu *CPU) fetchOpcode() error {
 		return err
 	}
 
-	cpu.opNum = 0
+	*cpu.opNum = 0
 
 	cpu.currInstructionLen = len(cpu.instructions[cpu.Registers.IR])
 	if cpu.currInstructionLen == 0 {
@@ -72,8 +74,8 @@ func (cpu *CPU) fetchOpcode() error {
 
 func (cpu *CPU) execute() {
 	cpu.ReadNewInstruction = false
-	cpu.instructions[cpu.Registers.IR][cpu.opNum]()
-	cpu.opNum++
+	cpu.instructions[cpu.Registers.IR][*cpu.opNum]()
+	*cpu.opNum++
 }
 
 func (cpu *CPU) Step() (bool, error) {
@@ -84,7 +86,7 @@ func (cpu *CPU) Step() (bool, error) {
 		return true, cpu.internalErr
 	}
 
-	if cpu.opNum == cpu.currInstructionLen {
+	if *cpu.opNum == cpu.currInstructionLen {
 		err := cpu.fetchOpcode()
 		if err != nil {
 			return true, err
