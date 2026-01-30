@@ -333,4 +333,11 @@ func (cpu *CPU) initLogic() {
 func (cpu *CPU) initCall() {
 	// jump n16
 	cpu.instructions[0xC3] = []func(){cpu.readN16Lsb, cpu.readN16Msb, cpu.ldR16R16("PC", "Temp16"), cpu.nop}
+	// jump hl
+	cpu.instructions[0xE9] = []func(){cpu.ldR16R16("PC", "HL")}
+	// jump cc, nn
+	cpu.instructions[0xC2] = []func(){cpu.readN16Lsb, cpu.readN16Msb, cpu.condJump('Z', false), cpu.nop}
+	cpu.instructions[0xD2] = []func(){cpu.readN16Lsb, cpu.readN16Msb, cpu.condJump('C', false), cpu.nop}
+	cpu.instructions[0xCA] = []func(){cpu.readN16Lsb, cpu.readN16Msb, cpu.condJump('Z', true), cpu.nop}
+	cpu.instructions[0xDA] = []func(){cpu.readN16Lsb, cpu.readN16Msb, cpu.condJump('C', true), cpu.nop}
 }

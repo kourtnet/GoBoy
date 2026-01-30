@@ -163,6 +163,22 @@ func (cpu *CPU) determine16RegDec(rName string) func() {
 	}
 }
 
+func (cpu *CPU) determineFlag(fName byte) func() bool {
+	switch fName {
+	case 'Z':
+		return cpu.Registers.FlagZ
+	case 'N':
+		return cpu.Registers.FlagN
+	case 'H':
+		return cpu.Registers.FlagH
+	case 'C':
+		return cpu.Registers.FlagC
+	default:
+		cpu.internalErr = fmt.Errorf("unknown flag name '%s'", fName)
+		return func() bool { return false }
+	}
+}
+
 func (cpu *CPU) nop() {
 }
 
@@ -598,4 +614,16 @@ func (cpu *CPU) addSPN8Cycle3() {
 	}
 
 	cpu.Registers.SetTemp16Msb(res)
+}
+
+func (cpu *CPU) condJump(fName byte, cond bool) func() {
+	f := cpu.determineFlag(fName)
+
+	return func() {
+		if f() == cond {
+			cpu.Registers.SetPC(cpu.Registers.Temp16())
+		} else {
+			cpu.opNum++
+		}
+	}
 }
