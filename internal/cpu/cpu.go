@@ -11,7 +11,7 @@ type CPU struct {
 	instructions       [instructionsNum][]func()
 	currInstructionLen int
 	opNum              int
-	step               int
+	MCycle             int
 
 	// required for operations that work with external structs (like bus)
 	// and can get an error. Because CPU operations are func(), we can't
@@ -77,7 +77,7 @@ func (cpu *CPU) execute() {
 }
 
 func (cpu *CPU) Step() (bool, error) {
-	cpu.step++
+	cpu.MCycle++
 	// fmt.Printf("Step %d:\n", cpu.step)
 	cpu.execute()
 	if cpu.internalErr != nil {

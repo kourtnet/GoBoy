@@ -19,6 +19,7 @@ var (
 	instructionsTitle = "Instructions"
 	registersTitle    = "Regs"
 	flagsTitle        = "Flg"
+	cyclesTitle       = "Cycls"
 	memoryTitle       = "Memory"
 	stackTitle        = "Stck"
 )
@@ -27,16 +28,19 @@ const (
 	romAddrEnd    uint16 = 0x7FFF
 	regTableLen          = 11
 	flagTableLen         = 7
+	cyclesNumLen         = 3
 	stackTableLen        = 14
 )
 
 type tui struct {
 	app *tview.Application
 
-	instList  *instructionList
-	regTable  *tview.Table
-	flagTable *tview.Table
-	topFlex   *tview.Flex
+	instList       *instructionList
+	regTable       *tview.Table
+	flagTable      *tview.Table
+	cyclesNum      *tview.TextView
+	flagCyclesFlex *tview.Flex
+	topFlex        *tview.Flex
 
 	memTable     *tview.Table
 	memContent   *memoryContent
@@ -94,11 +98,24 @@ func newTUI(memory []byte, sp uint16) *tui {
 	tui.flagTable.SetCellSimple(2, 0, " h")
 	tui.flagTable.SetCellSimple(3, 0, " c")
 
+	tui.cyclesNum = tview.NewTextView()
+	tui.cyclesNum.
+		SetTextAlign(tview.AlignCenter).
+		SetBorder(true).
+		SetTitle(cyclesTitle).
+		SetTitleAlign(tview.AlignCenter).
+		SetTitleColor(tcell.ColorBlue)
+
+	tui.flagCyclesFlex = tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(tui.flagTable, 0, 1, false).
+		AddItem(tui.cyclesNum, cyclesNumLen, 1, false)
+
 	tui.topFlex = tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(tui.instList, 0, 1, true).
-		AddItem(tui.regTable, regTableLen, 0, false).
-		AddItem(tui.flagTable, flagTableLen, 0, false)
+		AddItem(tui.regTable, regTableLen, 1, false).
+		AddItem(tui.flagCyclesFlex, flagTableLen, 0, false)
 
 	tui.memContent = newMemoryTable(memory)
 	tui.memTable = tview.NewTable()
@@ -292,6 +309,8 @@ func (deb *Debugger) stepInst() {
 			deb.tui.stackContent.sp = deb.cpu.Registers.SP()
 			deb.setRegs()
 			deb.regs = *deb.cpu.Registers
+			deb.tui.cyclesNum.SetText(fmt.Sprintf("%d", deb.cpu.MCycle))
+
 			break
 		}
 	}
@@ -352,6 +371,7 @@ func (deb *Debugger) Run() error {
 	deb.tui.instList.setCurrItemByPC(deb.cpu.Registers.PC() - 1)
 	deb.setRegs()
 	deb.regs = *deb.cpu.Registers
+	deb.tui.cyclesNum.SetText(fmt.Sprintf("%d", deb.cpu.MCycle))
 
 	go func() {
 		deb.err = deb.tui.app.Run()
