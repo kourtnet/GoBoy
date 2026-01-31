@@ -340,4 +340,6 @@ func (cpu *CPU) initCall() {
 	cpu.instructions[0xD2] = []func(){cpu.readN16Lsb, cpu.readN16Msb, cpu.condJump('C', false), cpu.nop}
 	cpu.instructions[0xCA] = []func(){cpu.readN16Lsb, cpu.readN16Msb, cpu.condJump('Z', true), cpu.nop}
 	cpu.instructions[0xDA] = []func(){cpu.readN16Lsb, cpu.readN16Msb, cpu.condJump('C', true), cpu.nop}
+	// jr e
+	cpu.instructions[0x18] = []func(){cpu.readN8, cpu.jr, cpu.nop}
 }

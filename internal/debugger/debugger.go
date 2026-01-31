@@ -187,16 +187,10 @@ func New(cpu *cpu.CPU, b *bus.Bus) (*Debugger, error) {
 }
 
 func (deb *Debugger) loadROM() error {
-	data, err := deb.bus.ReadBatch(
-		deb.cpu.Registers.PC(),
-		romAddrEnd,
-	)
-	if err != nil {
-		return err
-	}
+	data := deb.bus.Memory()
 
 	for i := 0; i < len(data); {
-		pc := uint16(i) + deb.cpu.Registers.PC()
+		pc := uint16(i)
 		byteSeq := make([]byte, 1, 3)
 
 		byteSeq[0] = data[i]

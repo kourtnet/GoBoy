@@ -627,3 +627,10 @@ func (cpu *CPU) condJump(fName byte, cond bool) func() {
 		}
 	}
 }
+
+func (cpu *CPU) jr() {
+	adj := int16(int8(cpu.Registers.Temp8))
+
+	res := cpu.Registers.PC() + uint16(adj)
+	cpu.Registers.SetPC(res)
+}
