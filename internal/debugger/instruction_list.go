@@ -29,7 +29,7 @@ func newInstructionList() *instructionList {
 	return res
 }
 
-func (il *instructionList) addItemByPC(pc uint16, byteSeq []byte, inst instruction) {
+func (il *instructionList) addItem(pc uint16, byteSeq []byte, inst instruction) {
 	il.addrs[pc] = il.GetItemCount()
 
 	text := fmt.Sprintf(
@@ -43,19 +43,19 @@ func (il *instructionList) addItemByPC(pc uint16, byteSeq []byte, inst instructi
 	il.AddItem(text, "", 0, nil)
 }
 
-func (il *instructionList) getTextByPC(pc uint16) string {
+func (il *instructionList) getText(pc uint16) string {
 	res, _ := il.GetItemText(il.addrs[pc])
 	return res
 }
 
-func (il *instructionList) setCurrItemByPC(pc uint16) {
+func (il *instructionList) setCurrItem(pc uint16) {
 	if il.isPrevItem {
 		il.SetItemText(il.prevInd, il.prevText, "")
 	}
 
 	il.isPrevItem = true
 	il.prevInd = il.addrs[pc]
-	il.prevText = il.getTextByPC(pc)
+	il.prevText = il.getText(pc)
 
 	res := il.prevText[:5] + "►" + il.prevText[6:]
 	il.SetItemText(il.prevInd, res, "")

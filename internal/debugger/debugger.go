@@ -219,7 +219,7 @@ func (deb *Debugger) loadROM() error {
 				arg + inst.ArgsFormat[substrInd+len("n8"):])
 		}
 
-		deb.tui.instList.addItemByPC(pc, byteSeq, inst)
+		deb.tui.instList.addItem(pc, byteSeq, inst)
 		i++
 	}
 
@@ -299,7 +299,7 @@ func (deb *Debugger) stepInst() {
 		}
 
 		if deb.cpu.ReadNewInstruction {
-			deb.tui.instList.setCurrItemByPC(deb.cpu.Registers.PC() - 1)
+			deb.tui.instList.setCurrItem(deb.cpu.Registers.PC() - 1)
 			deb.tui.stackContent.sp = deb.cpu.Registers.SP()
 			deb.setRegs()
 			deb.regs = *deb.cpu.Registers
@@ -362,7 +362,7 @@ func (deb *Debugger) Run() error {
 		return nil
 	}
 
-	deb.tui.instList.setCurrItemByPC(deb.cpu.Registers.PC() - 1)
+	deb.tui.instList.setCurrItem(deb.cpu.Registers.PC() - 1)
 	deb.setRegs()
 	deb.regs = *deb.cpu.Registers
 	deb.tui.cyclesNum.SetText(fmt.Sprintf("%d", deb.cpu.MCycle))
